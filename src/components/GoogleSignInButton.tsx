@@ -37,6 +37,16 @@ export default function GoogleSignInButton({
   })
 
   useEffect(() => {
+    // promptAsync() builds the auth URL (an async call) before it opens the
+    // popup — on web that gap is enough for the browser to no longer count
+    // the click as "recent user input" and it silently blocks the popup
+    // (ERR_WEB_BROWSER_BLOCKED). Pre-building the URL as soon as the request
+    // is ready means promptAsync finds request.url already cached and opens
+    // the popup synchronously within the click instead.
+    request?.makeAuthUrlAsync(Google.discovery).catch(() => {})
+  }, [request])
+
+  useEffect(() => {
     if (response?.type !== 'success') return
     const idToken = response.params.id_token
     if (!idToken) {
