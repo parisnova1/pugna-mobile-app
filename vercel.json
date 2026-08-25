@@ -1,0 +1,12 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "npx expo export -p web",
+  "outputDirectory": "dist",
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/clubs/:id", "destination": "/clubs/[id]" },
+    { "source": "/events/:id", "destination": "/events/[id]" },
+    { "source": "/fighters/:id", "destination": "/fighters/[id]" },
+    { "source": "/organizer-events/:id", "destination": "/organizer-events/[id]" }
+  ]
+}
