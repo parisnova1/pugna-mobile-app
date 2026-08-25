@@ -218,6 +218,8 @@ export const en = {
   'login.errorPassword': 'Password must be at least 6 characters.',
   'login.errorName': 'Enter your name.',
   'login.errorGeneric': 'Something went wrong.',
+  'login.continueWithGoogle': 'Continue with Google',
+  'login.orDivider': 'or',
 
   // ── Hero ──────────────────────────────────────────────────────────────
   'hero.eyebrow': 'DACH · Boxing · Kickboxing · MMA · BJJ',
@@ -629,6 +631,8 @@ export const de: Record<TranslationKey, string> = {
   'login.errorPassword': 'Das Passwort muss mindestens 6 Zeichen lang sein.',
   'login.errorName': 'Gib deinen Namen ein.',
   'login.errorGeneric': 'Etwas ist schiefgelaufen.',
+  'login.continueWithGoogle': 'Mit Google anmelden',
+  'login.orDivider': 'oder',
 
   'hero.eyebrow': 'DACH · Boxen · Kickboxen · MMA · BJJ',
   'hero.title1': 'Wo',

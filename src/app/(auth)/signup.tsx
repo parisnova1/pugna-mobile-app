@@ -5,6 +5,8 @@ import { Ionicons } from '@expo/vector-icons'
 import { useAuth, type Role } from '@/auth/AuthContext'
 import { useLanguage } from '@/i18n/LanguageContext'
 import Button from '@/components/Button'
+import GoogleSignInButton from '@/components/GoogleSignInButton'
+import OrDivider from '@/components/OrDivider'
 import { roleHomePath } from '@/lib/roleHome'
 import { ACCENT, ON_ACCENT, TEXT, BORDER, MUTED, BG, INPUT_BG, FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_BODY } from '@/theme'
 
@@ -58,6 +60,14 @@ export default function SignupScreen() {
             </Pressable>
           ))}
         </View>
+
+        <GoogleSignInButton
+          role={role}
+          homeLocation={homeLocation}
+          onSuccess={newUser => router.replace(roleHomePath(newUser.role))}
+          onError={setError}
+        />
+        <OrDivider />
 
         <View style={styles.field}>
           <Text style={styles.label}>{role === 'club' ? t('login.clubName') : t('login.name')}</Text>

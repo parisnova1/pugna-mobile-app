@@ -9,6 +9,7 @@ type AuthContextValue = {
   ready: boolean
   login: (email: string, password: string) => Promise<User>
   signup: (name: string, email: string, password: string, role?: Role, homeLocation?: string) => Promise<User>
+  loginWithGoogle: (idToken: string, role?: Role, homeLocation?: string) => Promise<User>
   logout: () => void
 }
 
@@ -53,12 +54,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return user
   }
 
+  // role/homeLocation only matter the first time this Google identity signs
+  // in (account creation) — the backend ignores them for an existing user.
+  const loginWithGoogle: AuthContextValue['loginWithGoogle'] = async (idToken, role, homeLocation) => {
+    const { token, user } = await apiFetch<{ token: string; user: User }>('/api/auth/google', {
+      method: 'POST',
+      body: JSON.stringify({ idToken, role, homeLocation }),
+    })
+    await setToken(token)
+    setUser(user)
+    return user
+  }
+
   const logout = () => {
     setToken(null)
     setUser(null)
   }
 
-  return <AuthContext.Provider value={{ user, ready, login, signup, logout }}>{children}</AuthContext.Provider>
+  return <AuthContext.Provider value={{ user, ready, login, signup, loginWithGoogle, logout }}>{children}</AuthContext.Provider>
 }
 
 export function useAuth() {

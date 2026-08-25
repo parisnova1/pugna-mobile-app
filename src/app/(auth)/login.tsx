@@ -5,6 +5,8 @@ import { Ionicons } from '@expo/vector-icons'
 import { useAuth, type Role } from '@/auth/AuthContext'
 import { useLanguage } from '@/i18n/LanguageContext'
 import Button from '@/components/Button'
+import GoogleSignInButton from '@/components/GoogleSignInButton'
+import OrDivider from '@/components/OrDivider'
 import { roleHomePath } from '@/lib/roleHome'
 import { ACCENT, TEXT, BORDER, MUTED, BG, INPUT_BG, FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_BODY } from '@/theme'
 
@@ -42,6 +44,12 @@ export default function LoginScreen() {
 
         <Text style={styles.eyebrow}>{t('login.welcomeBack')}</Text>
         <Text style={styles.title}>{t('login.logIn')}</Text>
+
+        <GoogleSignInButton
+          onSuccess={loggedInUser => router.replace(roleHomePath(loggedInUser.role))}
+          onError={setError}
+        />
+        <OrDivider />
 
         <View style={styles.field}>
           <Text style={styles.label}>{t('login.email')}</Text>
