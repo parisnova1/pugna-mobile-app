@@ -122,7 +122,7 @@ const styles = StyleSheet.create({
   heroTitle: { fontFamily: FONT_DISPLAY, fontSize: 34, lineHeight: 36, textTransform: 'uppercase', color: TEXT },
   quickRow: { flexDirection: 'row', gap: 10, marginBottom: 16 },
   quickCard: { flex: 1, backgroundColor: CARD, borderWidth: 1, borderColor: BORDER, borderRadius: 4, padding: 14, alignItems: 'flex-start', gap: 10 },
-  quickLabel: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 12, letterSpacing: 0.6, color: TEXT, textTransform: 'uppercase' },
+  quickLabel: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 12, letterSpacing: 0.6, color: TEXT, textTransform: 'uppercase', width: '100%' },
   scanCard: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: CARD, borderWidth: 1, borderColor: ACCENT, borderRadius: 4, padding: 16, marginBottom: 28 },
   scanTitle: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 14, color: TEXT, textTransform: 'uppercase' },
   scanSub: { fontFamily: FONT_BODY, fontSize: 12, color: MUTED, marginTop: 2 },
