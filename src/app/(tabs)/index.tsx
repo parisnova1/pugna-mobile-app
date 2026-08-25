@@ -6,6 +6,7 @@ import { apiFetch } from '@/lib/api'
 import { formatDisplayDate } from '@/lib/date'
 import { useLanguage } from '@/i18n/LanguageContext'
 import { useAuth } from '@/auth/AuthContext'
+import { useOnboarding } from '@/onboarding/OnboardingContext'
 import Screen from '@/components/Screen'
 import Spinner from '@/components/Spinner'
 import ErrorBoundary from '@/components/ErrorBoundary'
@@ -21,6 +22,7 @@ export default function DiscoverScreen() {
 function DiscoverScreenInner() {
   const { t } = useLanguage()
   const { user } = useAuth()
+  const { homeLocation, disciplines } = useOnboarding()
   const [events, setEvents] = useState<PublicEvent[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -30,10 +32,22 @@ function DiscoverScreenInner() {
 
   useEffect(() => {
     apiFetch<{ events: PublicEvent[] }>('/api/public/events')
-      .then(r => setEvents([...r.events].sort((a, b) => a.date.localeCompare(b.date)).slice(0, 5)))
+      .then(r => {
+        const sorted = [...r.events].sort((a, b) => a.date.localeCompare(b.date))
+        // Events matching the onboarding city or a chosen discipline surface
+        // first; everything else fills the remaining slots. With no location
+        // or disciplines saved (guest skipped onboarding), every event is a
+        // non-match and this is just the plain date-sorted list, same as before.
+        const loc = homeLocation.trim().toLowerCase()
+        const isMatch = (e: PublicEvent) =>
+          (!!loc && e.location.toLowerCase().includes(loc)) || disciplines.includes(e.discipline)
+        const personalized = sorted.filter(isMatch)
+        const rest = sorted.filter(e => !isMatch(e))
+        setEvents([...personalized, ...rest].slice(0, 5))
+      })
       .catch(() => {})
       .finally(() => setLoading(false))
-  }, [])
+  }, [homeLocation, disciplines])
 
   return (
     <Screen>

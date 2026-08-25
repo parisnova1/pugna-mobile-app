@@ -1,9 +1,10 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useRef } from 'react'
 import { View, Text, TextInput, FlatList, Pressable, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
 import { apiFetch } from '@/lib/api'
 import { formatDisplayDate } from '@/lib/date'
 import { useLanguage } from '@/i18n/LanguageContext'
+import { useOnboarding } from '@/onboarding/OnboardingContext'
 import Screen from '@/components/Screen'
 import Spinner from '@/components/Spinner'
 import EmptyState from '@/components/EmptyState'
@@ -21,10 +22,14 @@ export default function EventsScreen() {
 
 function EventsScreenInner() {
   const { t } = useLanguage()
+  const { disciplines: preferredDisciplines } = useOnboarding()
   const [events, setEvents] = useState<PublicEvent[]>([])
   const [loading, setLoading] = useState(true)
-  const [active, setActive] = useState('All')
+  // Empty array means "All" — multi-select so the onboarding interests step
+  // (which lets you pick several disciplines) can preselect more than one.
+  const [active, setActive] = useState<string[]>([])
   const [query, setQuery] = useState('')
+  const appliedPrefs = useRef(false)
 
   useEffect(() => {
     apiFetch<{ events: PublicEvent[] }>('/api/public/events')
@@ -33,10 +38,25 @@ function EventsScreenInner() {
       .finally(() => setLoading(false))
   }, [])
 
+  // Runs once, as soon as the onboarding preferences finish loading from
+  // AsyncStorage (they start empty on first render regardless of what was
+  // actually saved) — a user who never picked interests keeps the "All" default.
+  useEffect(() => {
+    if (!appliedPrefs.current && preferredDisciplines.length > 0) {
+      setActive(preferredDisciplines)
+      appliedPrefs.current = true
+    }
+  }, [preferredDisciplines])
+
+  const toggleDiscipline = (d: string) => {
+    if (d === 'All') { setActive([]); return }
+    setActive(prev => (prev.includes(d) ? prev.filter(x => x !== d) : [...prev, d]))
+  }
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
     return events
-      .filter(e => active === 'All' || e.discipline === active)
+      .filter(e => active.length === 0 || active.includes(e.discipline))
       .filter(e => !q || e.name.toLowerCase().includes(q) || e.organizer_name.toLowerCase().includes(q) || e.location.toLowerCase().includes(q))
   }, [events, active, query])
 
@@ -60,11 +80,14 @@ function EventsScreenInner() {
         keyExtractor={d => d}
         style={styles.chipRow}
         contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}
-        renderItem={({ item: d }) => (
-          <Pressable onPress={() => setActive(d)} style={[styles.chip, active === d && styles.chipActive]}>
-            <Text style={[styles.chipLabel, active === d && styles.chipLabelActive]}>{d}</Text>
-          </Pressable>
-        )}
+        renderItem={({ item: d }) => {
+          const isActive = d === 'All' ? active.length === 0 : active.includes(d)
+          return (
+            <Pressable onPress={() => toggleDiscipline(d)} style={[styles.chip, isActive && styles.chipActive]}>
+              <Text style={[styles.chipLabel, isActive && styles.chipLabelActive]}>{d}</Text>
+            </Pressable>
+          )
+        }}
       />
 
       {loading ? (

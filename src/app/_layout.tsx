@@ -4,6 +4,7 @@ import { Stack } from 'expo-router'
 import * as SplashScreen from 'expo-splash-screen'
 import { AuthProvider } from '@/auth/AuthContext'
 import { LanguageProvider } from '@/i18n/LanguageContext'
+import { OnboardingProvider } from '@/onboarding/OnboardingContext'
 import { useAppFonts } from '@/hooks/useAppFonts'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import { BG } from '@/theme'
@@ -42,17 +43,20 @@ export default function RootLayout() {
     <View style={{ flex: 1, backgroundColor: BG }}>
       <LanguageProvider>
         <AuthProvider>
-          <ErrorBoundary>
-            <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: BG } }}>
-              <Stack.Screen name="(tabs)" />
-              <Stack.Screen name="organizer" />
-              <Stack.Screen name="club-admin" />
-              <Stack.Screen name="organizer-events/[id]" />
-              <Stack.Screen name="(auth)/login" options={{ presentation: 'modal' }} />
-              <Stack.Screen name="(auth)/signup" options={{ presentation: 'modal' }} />
-              <Stack.Screen name="scan" options={{ presentation: 'fullScreenModal' }} />
-            </Stack>
-          </ErrorBoundary>
+          <OnboardingProvider>
+            <ErrorBoundary>
+              <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: BG } }}>
+                <Stack.Screen name="(onboarding)" />
+                <Stack.Screen name="(tabs)" />
+                <Stack.Screen name="organizer" />
+                <Stack.Screen name="club-admin" />
+                <Stack.Screen name="organizer-events/[id]" />
+                <Stack.Screen name="(auth)/login" options={{ presentation: 'modal' }} />
+                <Stack.Screen name="(auth)/signup" options={{ presentation: 'modal' }} />
+                <Stack.Screen name="scan" options={{ presentation: 'fullScreenModal' }} />
+              </Stack>
+            </ErrorBoundary>
+          </OnboardingProvider>
         </AuthProvider>
       </LanguageProvider>
     </View>

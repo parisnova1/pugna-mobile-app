@@ -1,12 +1,19 @@
 import { Tabs, Redirect } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '@/auth/AuthContext'
+import { useOnboarding } from '@/onboarding/OnboardingContext'
 import { useLanguage } from '@/i18n/LanguageContext'
 import { ACCENT, MUTED, BG, BORDER, FONT_DISPLAY_BOLD } from '@/theme'
 
 export default function TabsLayout() {
   const { t } = useLanguage()
   const { user, ready } = useAuth()
+  const { ready: onboardingReady, hasOnboarded } = useOnboarding()
+
+  // Onboarding runs before any auth decision — a brand-new device should
+  // never reach the tabs (or get bounced to a role dashboard) without
+  // seeing it first, whether or not the user ends up logged in.
+  if (onboardingReady && !hasOnboarded) return <Redirect href="/(onboarding)/welcome" />
 
   // No crossover nav — organizer/club accounts never see the viewer tabs,
   // same as the web app's strict RequireRole split. Direct navigation here

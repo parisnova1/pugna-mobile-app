@@ -394,6 +394,29 @@ export const en = {
   // ── Fighter profile (public) ─────────────────────────────────────────
   'fighterProfile.following': 'Following',
   'fighterProfile.followFighter': 'Follow Fighter',
+
+  // ── Onboarding ────────────────────────────────────────────────────────
+  'onboarding.skip': 'Skip',
+  'onboarding.next': 'Next',
+  'onboarding.getStarted': 'Get Started',
+  'onboarding.welcome1': 'Find combat sports clubs near you',
+  'onboarding.welcome2': 'Never miss an event',
+  'onboarding.welcome3': 'Find sparring partners',
+  'onboarding.roleTitle': 'What brings you to Pugna?',
+  'onboarding.roleSubtitle': "We'll tailor what you see next.",
+  'onboarding.locationTitle': 'Where are you based?',
+  'onboarding.locationSubtitle': "We'll use this to show events, clubs and sparring near you.",
+  'onboarding.locationLabel': 'Your City',
+  'onboarding.interestsTitle': 'What are you into?',
+  'onboarding.interestsSubtitle': 'Pick as many as you like.',
+  'onboarding.permissionsTitle': 'Before you start',
+  'onboarding.cameraPermissionTitle': 'Camera Access',
+  'onboarding.cameraPermissionBody': 'Pugna uses your camera to scan event QR codes for fast check-in at the venue.',
+  'onboarding.calendarPermissionTitle': 'Calendar Access',
+  'onboarding.calendarPermissionBody': 'Pugna can add events straight to your calendar so you never miss one.',
+  'onboarding.allow': 'Allow',
+  'onboarding.later': 'Later',
+  'onboarding.finish': 'Finish',
 } as const
 
 export type TranslationKey = keyof typeof en
@@ -772,4 +795,26 @@ export const de: Record<TranslationKey, string> = {
 
   'fighterProfile.following': 'Gefolgt',
   'fighterProfile.followFighter': 'Kämpfer folgen',
+
+  'onboarding.skip': 'Überspringen',
+  'onboarding.next': 'Weiter',
+  'onboarding.getStarted': "Los geht's",
+  'onboarding.welcome1': 'Finde Kampfsport-Vereine in deiner Nähe',
+  'onboarding.welcome2': 'Verpasse keine Veranstaltung',
+  'onboarding.welcome3': 'Finde Sparringspartner',
+  'onboarding.roleTitle': 'Was bringt dich zu Pugna?',
+  'onboarding.roleSubtitle': 'Damit zeigen wir dir das Richtige.',
+  'onboarding.locationTitle': 'Wo bist du zu Hause?',
+  'onboarding.locationSubtitle': 'Damit zeigen wir dir Events, Vereine und Sparring in deiner Nähe.',
+  'onboarding.locationLabel': 'Deine Stadt',
+  'onboarding.interestsTitle': 'Was interessiert dich?',
+  'onboarding.interestsSubtitle': 'Wähle so viele du möchtest.',
+  'onboarding.permissionsTitle': 'Bevor es losgeht',
+  'onboarding.cameraPermissionTitle': 'Kamerazugriff',
+  'onboarding.cameraPermissionBody': 'Pugna nutzt deine Kamera, um Event-QR-Codes für den schnellen Check-in vor Ort zu scannen.',
+  'onboarding.calendarPermissionTitle': 'Kalenderzugriff',
+  'onboarding.calendarPermissionBody': 'Pugna kann Events direkt zu deinem Kalender hinzufügen, damit du keins verpasst.',
+  'onboarding.allow': 'Erlauben',
+  'onboarding.later': 'Später',
+  'onboarding.finish': 'Fertig',
 }

@@ -1,16 +1,19 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useRef } from 'react'
 import { View, Text, TextInput, FlatList, Pressable, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
 import { apiFetch } from '@/lib/api'
 import { useLanguage } from '@/i18n/LanguageContext'
+import { useOnboarding } from '@/onboarding/OnboardingContext'
 import Screen from '@/components/Screen'
 import Spinner from '@/components/Spinner'
 import EmptyState from '@/components/EmptyState'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import { looksLikeTest } from '@/lib/testFlag'
-import { ACCENT, CARD, BORDER, MUTED, TEXT, INPUT_BG, FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_BODY } from '@/theme'
+import { ACCENT, ON_ACCENT, CARD, BORDER, MUTED, TEXT, INPUT_BG, FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_BODY } from '@/theme'
 
 type PublicClub = { id: number; name: string; location: string; disciplines: string[]; founded_year: number | null; member_count: number }
+
+const DISCIPLINES = ['All', 'Boxing', 'Kickboxing', 'Muay Thai', 'MMA', 'BJJ', 'Wrestling']
 
 export default function ClubsScreen() {
   return <ErrorBoundary><ClubsScreenInner /></ErrorBoundary>
@@ -18,9 +21,13 @@ export default function ClubsScreen() {
 
 function ClubsScreenInner() {
   const { t } = useLanguage()
+  const { disciplines: preferredDisciplines } = useOnboarding()
   const [clubs, setClubs] = useState<PublicClub[]>([])
   const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState('')
+  // Empty array means "All", same convention as the Events tab's filter.
+  const [active, setActive] = useState<string[]>([])
+  const appliedPrefs = useRef(false)
 
   useEffect(() => {
     apiFetch<{ clubs: PublicClub[] }>('/api/clubs')
@@ -29,11 +36,24 @@ function ClubsScreenInner() {
       .finally(() => setLoading(false))
   }, [])
 
+  useEffect(() => {
+    if (!appliedPrefs.current && preferredDisciplines.length > 0) {
+      setActive(preferredDisciplines)
+      appliedPrefs.current = true
+    }
+  }, [preferredDisciplines])
+
+  const toggleDiscipline = (d: string) => {
+    if (d === 'All') { setActive([]); return }
+    setActive(prev => (prev.includes(d) ? prev.filter(x => x !== d) : [...prev, d]))
+  }
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
-    if (!q) return clubs
-    return clubs.filter(c => c.name.toLowerCase().includes(q) || c.location.toLowerCase().includes(q) || c.disciplines.some(d => d.toLowerCase().includes(q)))
-  }, [clubs, query])
+    return clubs
+      .filter(c => active.length === 0 || c.disciplines.some(d => active.includes(d)))
+      .filter(c => !q || c.name.toLowerCase().includes(q) || c.location.toLowerCase().includes(q) || c.disciplines.some(d => d.toLowerCase().includes(q)))
+  }, [clubs, active, query])
 
   return (
     <Screen>
@@ -47,6 +67,23 @@ function ClubsScreenInner() {
           style={styles.search}
         />
       </View>
+
+      <FlatList
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        data={DISCIPLINES}
+        keyExtractor={d => d}
+        style={styles.chipRow}
+        contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}
+        renderItem={({ item: d }) => {
+          const isActive = d === 'All' ? active.length === 0 : active.includes(d)
+          return (
+            <Pressable onPress={() => toggleDiscipline(d)} style={[styles.chip, isActive && styles.chipActive]}>
+              <Text style={[styles.chipLabel, isActive && styles.chipLabelActive]}>{d}</Text>
+            </Pressable>
+          )
+        }}
+      />
 
       {loading ? (
         <View style={styles.centerFill}><Spinner /></View>
@@ -84,6 +121,11 @@ const styles = StyleSheet.create({
   header: { padding: 20, paddingBottom: 12, gap: 12 },
   title: { fontFamily: FONT_DISPLAY, fontSize: 28, textTransform: 'uppercase', color: TEXT },
   search: { backgroundColor: INPUT_BG, borderWidth: 1, borderColor: BORDER, color: TEXT, padding: 12, borderRadius: 4, fontFamily: FONT_BODY, fontSize: 14 },
+  chipRow: { flexGrow: 0, marginBottom: 16 },
+  chip: { borderWidth: 1, borderColor: BORDER, borderRadius: 9999, paddingVertical: 8, paddingHorizontal: 16 },
+  chipActive: { backgroundColor: ACCENT, borderColor: ACCENT },
+  chipLabel: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 12, letterSpacing: 0.8, color: MUTED, textTransform: 'uppercase' },
+  chipLabelActive: { color: ON_ACCENT },
   centerFill: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   list: { paddingHorizontal: 16, paddingBottom: 24, gap: 10 },
   card: { flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: CARD, borderWidth: 1, borderColor: BORDER, borderRadius: 4, padding: 14 },
