@@ -93,7 +93,7 @@ export const en = {
   // ── Club dashboard ────────────────────────────────────────────────────
   'club.tab.details': 'Club',
   'club.tab.sparring': 'Sparring',
-  'club.tab.fighters': 'Find Fighters',
+  'club.tab.events': 'Find Events',
   'club.details.title': 'Club Details',
   'club.details.name': 'Club Name',
   'club.details.location': 'Location',
@@ -129,7 +129,8 @@ export const en = {
   'club.sparring.errorLevel': 'Choose at least one level.',
   'club.sparring.stopRequests': 'Stop Requests',
   'club.sparring.resumeRequests': 'Resume Requests',
-  'club.fighters.title': 'Find Fighters',
+  'club.events.title': 'Find Events',
+  'club.events.yourEvents': 'Your Events',
 
   // ── Nav / header ──────────────────────────────────────────────────────
   'nav.discover': 'Discover',
@@ -578,7 +579,7 @@ export const de: Record<TranslationKey, string> = {
 
   'club.tab.details': 'Verein',
   'club.tab.sparring': 'Sparring',
-  'club.tab.fighters': 'Kämpfer finden',
+  'club.tab.events': 'Events finden',
   'club.details.title': 'Vereinsdetails',
   'club.details.name': 'Vereinsname',
   'club.details.location': 'Ort',
@@ -614,7 +615,8 @@ export const de: Record<TranslationKey, string> = {
   'club.sparring.errorLevel': 'Wähle mindestens ein Niveau.',
   'club.sparring.stopRequests': 'Anfragen stoppen',
   'club.sparring.resumeRequests': 'Anfragen öffnen',
-  'club.fighters.title': 'Kämpfer finden',
+  'club.events.title': 'Events finden',
+  'club.events.yourEvents': 'Deine Events',
 
   'nav.discover': 'Entdecken',
   'nav.events': 'Veranstaltungen',

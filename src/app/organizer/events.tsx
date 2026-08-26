@@ -12,7 +12,7 @@ import Button from '@/components/Button'
 import DatePickerField from '@/components/DatePickerField'
 import { ACCENT, ON_ACCENT, CARD, BORDER, MUTED, TEXT, INPUT_BG, FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_BODY } from '@/theme'
 
-type OrganizerEvent = {
+export type OrganizerEvent = {
   id: number; name: string; date: string; location: string; venue: string; discipline: string
   format: 'bracket' | 'card'; status: string
 }
@@ -84,7 +84,11 @@ function OrganizerEventsInner() {
   )
 }
 
-function EventFormModal({ event, onCancel, onSaved }: { event: OrganizerEvent | null; onCancel: () => void; onSaved: () => void }) {
+// Exported so club accounts (club-admin/events.tsx) can create and edit
+// events through the exact same form/backend as organizers — the events API
+// has no role restriction, only ownership, so this is the real feature, not
+// a lookalike copy that could drift from it.
+export function EventFormModal({ event, onCancel, onSaved }: { event: OrganizerEvent | null; onCancel: () => void; onSaved: () => void }) {
   const { t } = useLanguage()
   const [name, setName] = useState(event?.name ?? '')
   const [date, setDate] = useState(event?.date ?? '')

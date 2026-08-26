@@ -33,8 +33,8 @@ export default function ClubTabsLayout() {
         options={{ title: t('club.tab.sparring'), tabBarIcon: ({ color, size }) => <Ionicons name="body" size={size} color={color} /> }}
       />
       <Tabs.Screen
-        name="fighters"
-        options={{ title: t('club.tab.fighters'), tabBarIcon: ({ color, size }) => <Ionicons name="search" size={size} color={color} /> }}
+        name="events"
+        options={{ title: t('club.tab.events'), tabBarIcon: ({ color, size }) => <Ionicons name="calendar" size={size} color={color} /> }}
       />
     </Tabs>
   )
