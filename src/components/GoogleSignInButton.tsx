@@ -30,13 +30,26 @@ export default function GoogleSignInButton({
   const { loginWithGoogle } = useAuth()
   const [loading, setLoading] = useState(false)
 
+  // useIdTokenAuthRequest throws synchronously during render (not just a
+  // rejected promise) if the platform-relevant client ID is undefined —
+  // discovered when local dev, which has no EXPO_PUBLIC_GOOGLE_CLIENT_ID_WEB
+  // set, crashed the entire login screen rather than just leaving this one
+  // button unusable. A dummy fallback keeps the hook from throwing; `configured`
+  // gates the actual sign-in attempt so tapping it fails with a clear message
+  // instead of silently trying an OAuth flow with a fake client ID.
+  const webClientId = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_WEB
+  const iosClientId = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS
+  const androidClientId = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_ANDROID
+  const configured = !!(webClientId || iosClientId || androidClientId)
+
   const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
-    webClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_WEB,
-    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS,
-    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_ANDROID,
+    webClientId: webClientId || 'not-configured',
+    iosClientId: iosClientId || 'not-configured',
+    androidClientId: androidClientId || 'not-configured',
   })
 
   useEffect(() => {
+    if (!configured) return
     // promptAsync() builds the auth URL (an async call) before it opens the
     // popup — on web that gap is enough for the browser to no longer count
     // the click as "recent user input" and it silently blocks the popup
@@ -44,7 +57,7 @@ export default function GoogleSignInButton({
     // is ready means promptAsync finds request.url already cached and opens
     // the popup synchronously within the click instead.
     request?.makeAuthUrlAsync(Google.discovery).catch(() => {})
-  }, [request])
+  }, [request, configured])
 
   useEffect(() => {
     if (response?.type !== 'success') return
@@ -64,9 +77,9 @@ export default function GoogleSignInButton({
 
   return (
     <Pressable
-      onPress={() => promptAsync()}
-      disabled={!request || loading}
-      style={({ pressed }) => [styles.base, (pressed || loading) && styles.pressed, !request && styles.disabled]}
+      onPress={() => (configured ? promptAsync() : onError(t('login.googleNotConfigured')))}
+      disabled={(configured && !request) || loading}
+      style={({ pressed }) => [styles.base, (pressed || loading) && styles.pressed, configured && !request && styles.disabled]}
     >
       <Ionicons name="logo-google" size={18} color={ON_ACCENT} />
       <Text style={styles.label}>{loading ? t('login.pleaseWait') : t('login.continueWithGoogle')}</Text>

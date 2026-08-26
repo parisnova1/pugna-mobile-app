@@ -47,6 +47,12 @@
         {
           "calendarPermission": "Pugna adds events to your calendar when you tap \"Add to Calendar\"."
         }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Pugna uses your location to show events, clubs and sparring near you."
+        }
       ]
     ],
     "experiments": {

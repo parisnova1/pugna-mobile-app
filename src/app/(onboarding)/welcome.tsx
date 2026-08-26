@@ -1,13 +1,14 @@
 import { useRef, useState } from 'react'
-import { View, Text, ScrollView, StyleSheet, useWindowDimensions, type NativeSyntheticEvent, type NativeScrollEvent } from 'react-native'
+import { View, Text, Pressable, ScrollView, StyleSheet, useWindowDimensions, type NativeSyntheticEvent, type NativeScrollEvent } from 'react-native'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useLanguage } from '@/i18n/LanguageContext'
+import { Icon } from '@/components/icons/Icon'
 import Screen from '@/components/Screen'
 import Button from '@/components/Button'
 import SkipLink from '@/onboarding/SkipLink'
 import BackLink from '@/onboarding/BackLink'
-import { ACCENT, BORDER, TEXT, FONT_DISPLAY } from '@/theme'
+import { ACCENT, BORDER, MUTED, TEXT, FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_BODY } from '@/theme'
 
 export default function WelcomeScreen() {
   const { t } = useLanguage()
@@ -15,8 +16,11 @@ export default function WelcomeScreen() {
   const scrollRef = useRef<ScrollView>(null)
   const [page, setPage] = useState(0)
 
+  // Slide 1 carries the hero mark and the primary headline/subtext; slides 2
+  // and 3 keep the existing one-liners covering the other two pillars
+  // (events, sparring) referenced by that same headline's supporting line.
   const slides = [
-    { icon: 'shield' as const, text: t('onboarding.welcome1') },
+    { hero: true, text: t('onboarding.welcome1'), subtext: t('onboarding.welcome1Sub') },
     { icon: 'calendar' as const, text: t('onboarding.welcome2') },
     { icon: 'body' as const, text: t('onboarding.welcome3') },
   ]
@@ -60,10 +64,15 @@ export default function WelcomeScreen() {
       >
         {slides.map((slide, i) => (
           <View key={i} style={[styles.slide, { width }]}>
-            <View style={styles.iconCircle}>
-              <Ionicons name={slide.icon} size={36} color={ACCENT} />
-            </View>
+            {slide.hero ? (
+              <Icon name="hero" size={120} color={TEXT} />
+            ) : (
+              <View style={styles.iconCircle}>
+                <Ionicons name={slide.icon} size={36} color={ACCENT} />
+              </View>
+            )}
             <Text style={styles.slideText}>{slide.text}</Text>
+            {slide.subtext && <Text style={styles.slideSubtext}>{slide.subtext}</Text>}
           </View>
         ))}
       </ScrollView>
@@ -75,6 +84,11 @@ export default function WelcomeScreen() {
           ))}
         </View>
         <Button label={isLast ? t('onboarding.getStarted') : t('onboarding.next')} onPress={advance} style={styles.button} />
+        {isLast && (
+          <Pressable onPress={() => router.push('/(auth)/login')} style={styles.loginLink} hitSlop={8}>
+            <Text style={styles.loginLinkText}>{t('onboarding.alreadyHaveAccount')}</Text>
+          </Pressable>
+        )}
       </View>
     </Screen>
   )
@@ -84,10 +98,13 @@ const styles = StyleSheet.create({
   pager: { flex: 1 },
   slide: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 40 },
   iconCircle: { width: 88, height: 88, borderRadius: 44, borderWidth: 1, borderColor: BORDER, alignItems: 'center', justifyContent: 'center', marginBottom: 32 },
-  slideText: { fontFamily: FONT_DISPLAY, fontSize: 26, textTransform: 'uppercase', color: TEXT, textAlign: 'center', lineHeight: 32 },
+  slideText: { fontFamily: FONT_DISPLAY, fontSize: 26, textTransform: 'uppercase', color: TEXT, textAlign: 'center', lineHeight: 32, marginTop: 32 },
+  slideSubtext: { fontFamily: FONT_BODY, fontSize: 14, color: MUTED, textAlign: 'center', marginTop: 12, lineHeight: 20 },
   footer: { paddingHorizontal: 28, paddingBottom: 32, alignItems: 'center' },
   dots: { flexDirection: 'row', gap: 8, marginBottom: 24 },
   dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: BORDER },
   dotActive: { backgroundColor: ACCENT },
   button: { alignSelf: 'stretch' },
+  loginLink: { marginTop: 16, padding: 4 },
+  loginLinkText: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 12, letterSpacing: 1, color: MUTED, textTransform: 'uppercase', textDecorationLine: 'underline' },
 })

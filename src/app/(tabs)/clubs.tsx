@@ -8,12 +8,14 @@ import Screen from '@/components/Screen'
 import Spinner from '@/components/Spinner'
 import EmptyState from '@/components/EmptyState'
 import ErrorBoundary from '@/components/ErrorBoundary'
+import Chip from '@/components/Chip'
 import { looksLikeTest } from '@/lib/testFlag'
-import { ACCENT, ON_ACCENT, CARD, BORDER, MUTED, TEXT, INPUT_BG, FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_BODY } from '@/theme'
+import { DISCIPLINES as REAL_DISCIPLINES, DISCIPLINE_LABEL_KEY, DISCIPLINE_ICON } from '@/lib/disciplines'
+import { ACCENT, CARD, BORDER, MUTED, TEXT, INPUT_BG, FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_BODY } from '@/theme'
 
 type PublicClub = { id: number; name: string; location: string; disciplines: string[]; founded_year: number | null; member_count: number }
 
-const DISCIPLINES = ['All', 'Boxing', 'Kickboxing', 'Muay Thai', 'MMA', 'BJJ', 'Wrestling']
+const DISCIPLINES = ['All', ...REAL_DISCIPLINES]
 
 export default function ClubsScreen() {
   return <ErrorBoundary><ClubsScreenInner /></ErrorBoundary>
@@ -77,11 +79,8 @@ function ClubsScreenInner() {
         contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}
         renderItem={({ item: d }) => {
           const isActive = d === 'All' ? active.length === 0 : active.includes(d)
-          return (
-            <Pressable onPress={() => toggleDiscipline(d)} style={[styles.chip, isActive && styles.chipActive]}>
-              <Text style={[styles.chipLabel, isActive && styles.chipLabelActive]}>{d}</Text>
-            </Pressable>
-          )
+          const label = d === 'All' ? t('events.discipline.all') : t(DISCIPLINE_LABEL_KEY[d])
+          return <Chip icon={d === 'All' ? undefined : DISCIPLINE_ICON[d]} label={label} selected={isActive} onPress={() => toggleDiscipline(d)} />
         }}
       />
 
@@ -122,10 +121,6 @@ const styles = StyleSheet.create({
   title: { fontFamily: FONT_DISPLAY, fontSize: 28, textTransform: 'uppercase', color: TEXT },
   search: { backgroundColor: INPUT_BG, borderWidth: 1, borderColor: BORDER, color: TEXT, padding: 12, borderRadius: 4, fontFamily: FONT_BODY, fontSize: 14 },
   chipRow: { flexGrow: 0, marginBottom: 16 },
-  chip: { borderWidth: 1, borderColor: BORDER, borderRadius: 9999, paddingVertical: 8, paddingHorizontal: 16 },
-  chipActive: { backgroundColor: ACCENT, borderColor: ACCENT },
-  chipLabel: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 12, letterSpacing: 0.8, color: MUTED, textTransform: 'uppercase' },
-  chipLabelActive: { color: ON_ACCENT },
   centerFill: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   list: { paddingHorizontal: 16, paddingBottom: 24, gap: 10 },
   card: { flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: CARD, borderWidth: 1, borderColor: BORDER, borderRadius: 4, padding: 14 },

@@ -3,7 +3,9 @@ import { View, Text, TextInput, StyleSheet, Pressable, KeyboardAvoidingView, Pla
 import { router, useLocalSearchParams } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useAuth, type Role } from '@/auth/AuthContext'
+import { useOnboarding } from '@/onboarding/OnboardingContext'
 import { useLanguage } from '@/i18n/LanguageContext'
+import { apiFetch } from '@/lib/api'
 import Button from '@/components/Button'
 import GoogleSignInButton from '@/components/GoogleSignInButton'
 import OrDivider from '@/components/OrDivider'
@@ -15,14 +17,17 @@ const ROLES: Role[] = ['viewer', 'club', 'organizer']
 export default function SignupScreen() {
   const { signup } = useAuth()
   const { t } = useLanguage()
-  const params = useLocalSearchParams<{ role?: string }>()
+  const { disciplines, homeLocation: onboardingLocation, homeLat, homeLng } = useOnboarding()
+  const params = useLocalSearchParams<{ role?: string; name?: string }>()
   const initialRole: Role = ROLES.includes(params.role as Role) ? (params.role as Role) : 'viewer'
 
   const [role, setRole] = useState<Role>(initialRole)
-  const [name, setName] = useState('')
+  const [name, setName] = useState(params.name ?? '')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [homeLocation, setHomeLocation] = useState('')
+  // Prefilled from onboarding's club-info.tsx when that's how we got here —
+  // stays editable either way, same as every other field on this screen.
+  const [homeLocation, setHomeLocation] = useState(initialRole === 'club' ? onboardingLocation : '')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -35,6 +40,16 @@ export default function SignupScreen() {
     setLoading(true)
     try {
       const newUser = await signup(name, email, password, role, homeLocation)
+      // clubs.location/clubs.disciplines aren't part of the signup endpoint
+      // (only users.home_location is) — this is the one follow-up call that
+      // applies whatever onboarding's club-info.tsx already collected to the
+      // real club profile the signup endpoint auto-creates for role 'club'.
+      if (newUser.role === 'club' && (disciplines.length > 0 || homeLat != null)) {
+        await apiFetch('/api/clubs/me', {
+          method: 'PATCH',
+          body: JSON.stringify({ disciplines, location: homeLocation, lat: homeLat, lng: homeLng }),
+        }).catch(() => {})
+      }
       router.replace(roleHomePath(newUser.role))
     } catch (err) {
       setError(err instanceof Error ? err.message : t('login.errorGeneric'))
