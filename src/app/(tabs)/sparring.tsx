@@ -11,9 +11,15 @@ import Button from '@/components/Button'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import { TEXT, CARD, BORDER, MUTED, INPUT_BG, FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_BODY } from '@/theme'
 
-type SparringSession = { id: number; club_id: number; location: string; date: string; time: string; weight_range: string; level: string; spots: number; discipline: string; host_name: string; registered_fighters: number }
+type SparringSession = { id: number; club_id: number; location: string; date: string; time: string; weight_range: string; level: string; spots: number; discipline: string; host_name: string; registered_fighters: number; message: string; accepting_requests: number }
 
 const DAY_KEYS = ['day.0', 'day.1', 'day.2', 'day.3', 'day.4', 'day.5', 'day.6'] as const
+
+// `level` stores comma-joined values ("Amateur,Advanced") — a lone value
+// (or pre-multi-select legacy data) still parses fine as a 1-item array.
+function parseLevels(level: string): string[] {
+  return level ? level.split(',').filter(Boolean) : []
+}
 
 function dayLabel(isoDate: string, t: (k: any) => string): string {
   const d = new Date(`${isoDate}T00:00:00`)
@@ -63,23 +69,27 @@ function SparringScreenInner() {
           contentContainerStyle={styles.list}
           ListEmptyComponent={<EmptyState message={t('sparring.noSessions')} />}
           renderItem={({ item: s }) => {
-            const remaining = Math.max(0, s.spots - s.registered_fighters)
+            const unlimited = s.spots === 0
+            const remaining = unlimited ? Infinity : Math.max(0, s.spots - s.registered_fighters)
+            const closed = !s.accepting_requests
+            const full = !unlimited && remaining === 0
             const isOwn = ownClubId !== null && s.club_id === ownClubId
             return (
               <View style={styles.card}>
                 <View style={styles.cardTop}>
                   <View style={styles.tag}><Text style={styles.tagText}>{s.discipline}</Text></View>
-                  <Text style={[styles.spotsText, { color: remaining > 0 ? TEXT : MUTED }]}>
-                    {remaining > 0 ? `${remaining} ${t('sparring.spotsLeft')}` : t('sparring.full')}
+                  <Text style={[styles.spotsText, { color: !closed && !full ? TEXT : MUTED }]}>
+                    {closed ? t('sparring.closed') : full ? t('sparring.full') : unlimited ? t('sparring.unlimited') : `${remaining} ${t('sparring.spotsLeft')}`}
                   </Text>
                 </View>
                 <Text style={styles.cardTitle}>{s.location}</Text>
                 <Text style={styles.cardMeta}>{dayLabel(s.date, t)} · {s.time}</Text>
                 <View style={styles.tagRow}>
                   {!!s.weight_range && <View style={styles.tag}><Text style={styles.tagText}>{s.weight_range}</Text></View>}
-                  <View style={styles.tag}><Text style={styles.tagText}>{s.level}</Text></View>
+                  {parseLevels(s.level).map(l => <View key={l} style={styles.tag}><Text style={styles.tagText}>{l}</Text></View>)}
                 </View>
                 <Text style={styles.hostText}>{t('sparring.hostedBy')} {s.host_name}</Text>
+                {!!s.message && <Text style={styles.infoBox}>{s.message}</Text>}
 
                 {isOwn ? (
                   <View style={styles.disabledButton}><Text style={styles.disabledButtonText}>{t('sparring.yourSession')}</Text></View>
@@ -87,9 +97,9 @@ function SparringScreenInner() {
                   <Text style={styles.clubOnlyText}>{t('sparring.clubAccountsOnly')}</Text>
                 ) : (
                   <Button
-                    label={remaining === 0 ? t('sparring.full') : t('sparring.join')}
+                    label={closed ? t('sparring.closed') : full ? t('sparring.full') : t('sparring.join')}
                     variant="outline"
-                    disabled={remaining === 0}
+                    disabled={closed || full}
                     onPress={() => (user ? setJoinTarget(s) : router.push({ pathname: '/(auth)/login', params: { role: 'club' } }))}
                   />
                 )}
@@ -141,6 +151,7 @@ function JoinSparringModal({ session, onCancel, onJoined }: { session: SparringS
         <Pressable style={styles.modalCard} onPress={e => e.stopPropagation()}>
           <Text style={styles.modalTitle}>{t('sparring.join')}</Text>
           <Text style={styles.modalMeta}>{session.host_name} · {session.location} · {dayLabel(session.date, t)} · {session.time}</Text>
+          {!!session.message && <Text style={styles.infoBox}>{session.message}</Text>}
 
           <Text style={styles.label}>{t('sparring.numberOfFighters')}</Text>
           <TextInput style={styles.input} value={fighterCount} onChangeText={setFighterCount} keyboardType="number-pad" />
@@ -172,6 +183,7 @@ const styles = StyleSheet.create({
   cardMeta: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 12, letterSpacing: 0.6, color: MUTED, textTransform: 'uppercase', marginBottom: 12 },
   tagRow: { flexDirection: 'row', gap: 6, marginBottom: 12, flexWrap: 'wrap' },
   hostText: { fontFamily: FONT_BODY, fontSize: 12, color: MUTED, marginBottom: 12 },
+  infoBox: { fontFamily: FONT_BODY, fontSize: 12, fontStyle: 'italic', color: MUTED, backgroundColor: INPUT_BG, borderRadius: 4, padding: 10, marginBottom: 12 },
   disabledButton: { borderWidth: 1, borderColor: BORDER, borderRadius: 9999, paddingVertical: 12, alignItems: 'center' },
   disabledButtonText: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 12, letterSpacing: 1, color: MUTED, textTransform: 'uppercase' },
   clubOnlyText: { fontFamily: FONT_BODY, fontSize: 12, color: MUTED, textAlign: 'center', textTransform: 'uppercase', paddingVertical: 10 },

@@ -11,12 +11,26 @@ import Button from '@/components/Button'
 import DatePickerField from '@/components/DatePickerField'
 import { ACCENT, ON_ACCENT, TEXT, CARD, BORDER, MUTED, INPUT_BG, FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_BODY } from '@/theme'
 
-type Session = { id: number; discipline: string; location: string; date: string; time: string; weight_range: string; level: string; spots: number; registered_fighters: number }
+type Session = { id: number; discipline: string; location: string; date: string; time: string; weight_range: string; level: string; spots: number; registered_fighters: number; message: string; accepting_requests: number }
 type OtherSession = Session & { club_id: number; host_name: string }
 type Participant = { club_id: number; club_name: string; fighter_count: number; weight_category: string }
 
 const DISCIPLINES = ['Boxing', 'Kickboxing', 'Muay Thai', 'MMA', 'BJJ', 'Wrestling']
 const LEVELS = ['Amateur', 'Intermediate', 'Advanced', 'All Levels']
+
+// `level` stores comma-joined values ("Amateur,Advanced") — a lone value
+// (or the pre-multi-select legacy data) still parses fine as a 1-item array.
+function parseLevels(level: string): string[] {
+  return level ? level.split(',').filter(Boolean) : []
+}
+
+// Selecting "All Levels" replaces any other selection; picking a specific
+// level while "All Levels" is active starts a fresh multi-selection.
+function toggleLevel(current: string[], level: string): string[] {
+  if (level === 'All Levels') return ['All Levels']
+  const base = current.includes('All Levels') ? [] : current
+  return base.includes(level) ? base.filter(l => l !== level) : [...base, level]
+}
 
 // RN Web has no native alert dialog implementation — Alert.alert silently
 // no-ops there, so joining would otherwise give zero feedback on web.
@@ -49,6 +63,13 @@ function ClubSparringInner() {
     try { await apiFetch(`/api/sparring/${id}`, { method: 'DELETE' }); load() } catch { /* ignore */ }
   }
 
+  const toggleAccepting = async (s: Session) => {
+    try {
+      await apiFetch(`/api/sparring/${s.id}`, { method: 'PATCH', body: JSON.stringify({ acceptingRequests: !s.accepting_requests }) })
+      load()
+    } catch { /* ignore */ }
+  }
+
   return (
     <Screen>
       <View style={styles.header}>
@@ -69,12 +90,22 @@ function ClubSparringInner() {
           ListEmptyComponent={<EmptyState message={t('club.sparring.none')} ctaLabel={t('club.sparring.add')} onPress={() => setAdding(true)} />}
           renderItem={({ item: s }) => (
             <View style={styles.card}>
-              <Text style={styles.cardDiscipline}>{s.discipline}</Text>
+              <View style={styles.cardTop}>
+                <Text style={styles.cardDiscipline}>{s.discipline}</Text>
+                {!s.accepting_requests && <Text style={styles.closedBadge}>{t('sparring.closed')}</Text>}
+              </View>
               <Text style={styles.cardTitle}>{s.location}</Text>
-              <Text style={styles.cardMeta}>{formatDisplayDate(s.date)} · {s.time} · {s.weight_range} · {s.level}</Text>
-              <Text style={styles.cardMeta}>{s.registered_fighters}/{s.spots}</Text>
+              <Text style={styles.cardMeta}>{formatDisplayDate(s.date)} · {s.time} · {s.weight_range} · {parseLevels(s.level).join(', ')}</Text>
+              <Text style={styles.cardMeta}>{s.registered_fighters}/{s.spots === 0 ? t('sparring.unlimited') : s.spots}</Text>
+              {!!s.message && <Text style={styles.infoBox}>{s.message}</Text>}
               <View style={styles.actionRow}>
                 <Button label={t('club.sparring.participants')} variant="outline" onPress={() => setViewingParticipants(s)} style={styles.actionButton} />
+                <Button
+                  label={s.accepting_requests ? t('club.sparring.stopRequests') : t('club.sparring.resumeRequests')}
+                  variant="outline"
+                  onPress={() => toggleAccepting(s)}
+                  style={styles.actionButton}
+                />
                 <Button label={t('common.delete')} variant="ghost" onPress={() => remove(s.id)} style={styles.actionButton} />
               </View>
             </View>
@@ -117,22 +148,26 @@ function BrowseSparringModal({ ownClubId, onClose }: { ownClubId: number | null;
             <ScrollView style={styles.browseScroll}>
               <View style={{ gap: 12 }}>
                 {browseSessions.map(s => {
-                  const remaining = Math.max(0, s.spots - s.registered_fighters)
+                  const unlimited = s.spots === 0
+                  const remaining = unlimited ? Infinity : Math.max(0, s.spots - s.registered_fighters)
+                  const closed = !s.accepting_requests
+                  const full = !unlimited && remaining === 0
                   return (
                     <View key={s.id} style={styles.card}>
                       <View style={styles.cardTop}>
                         <Text style={styles.cardDiscipline}>{s.discipline}</Text>
-                        <Text style={[styles.spotsText, { color: remaining > 0 ? TEXT : MUTED }]}>
-                          {remaining > 0 ? `${remaining} ${t('sparring.spotsLeft')}` : t('sparring.full')}
+                        <Text style={[styles.spotsText, { color: !closed && !full ? TEXT : MUTED }]}>
+                          {closed ? t('sparring.closed') : full ? t('sparring.full') : unlimited ? t('sparring.unlimited') : `${remaining} ${t('sparring.spotsLeft')}`}
                         </Text>
                       </View>
                       <Text style={styles.cardTitle}>{s.location}</Text>
-                      <Text style={styles.cardMeta}>{formatDisplayDate(s.date)} · {s.time} · {s.weight_range} · {s.level}</Text>
+                      <Text style={styles.cardMeta}>{formatDisplayDate(s.date)} · {s.time} · {s.weight_range} · {parseLevels(s.level).join(', ')}</Text>
                       <Text style={styles.cardMeta}>{t('sparring.hostedBy')} {s.host_name}</Text>
+                      {!!s.message && <Text style={styles.infoBox}>{s.message}</Text>}
                       <Button
-                        label={remaining === 0 ? t('sparring.full') : t('sparring.join')}
+                        label={closed ? t('sparring.closed') : full ? t('sparring.full') : t('sparring.join')}
                         variant="outline"
-                        disabled={remaining === 0}
+                        disabled={closed || full}
                         onPress={() => setJoinTarget(s)}
                         style={{ marginTop: 12 }}
                       />
@@ -189,6 +224,7 @@ function JoinSparringModal({ session, onCancel, onJoined }: { session: OtherSess
         <Pressable style={styles.modalCard} onPress={e => e.stopPropagation()}>
           <Text style={styles.modalTitle}>{t('sparring.join')}</Text>
           <Text style={styles.cardMeta}>{session.host_name} · {session.location} · {formatDisplayDate(session.date)} · {session.time}</Text>
+          {!!session.message && <Text style={styles.infoBox}>{session.message}</Text>}
 
           <Field label={t('sparring.numberOfFighters')}><TextInput style={styles.input} value={fighterCount} onChangeText={setFighterCount} keyboardType="number-pad" /></Field>
           <Field label={t('sparring.weightCategory')}><TextInput style={styles.input} value={weightCategory} onChangeText={setWeightCategory} placeholder="70-80 KG" placeholderTextColor={MUTED} /></Field>
@@ -209,19 +245,25 @@ function AddSessionModal({ onCancel, onSaved }: { onCancel: () => void; onSaved:
   const [date, setDate] = useState('')
   const [time, setTime] = useState('')
   const [weightRange, setWeightRange] = useState('')
-  const [level, setLevel] = useState(LEVELS[0])
-  const [spots, setSpots] = useState('4')
+  const [levels, setLevels] = useState<string[]>(['All Levels'])
+  const [spots, setSpots] = useState('')
+  const [message, setMessage] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const submit = async () => {
     if (!location.trim() || !date.trim() || !time.trim()) { setError(t('organizer.eventForm.errorRequired')); return }
+    if (levels.length === 0) { setError(t('club.sparring.errorLevel')); return }
     setSaving(true)
     setError(null)
     try {
       await apiFetch('/api/sparring', {
         method: 'POST',
-        body: JSON.stringify({ discipline, location: location.trim(), date: date.trim(), time: time.trim(), weightRange: weightRange.trim(), level, spots: Number(spots) || 1 }),
+        body: JSON.stringify({
+          discipline, location: location.trim(), date: date.trim(), time: time.trim(),
+          weightRange: weightRange.trim(), levels, spots: spots.trim() ? Number(spots) || 0 : 0,
+          message: message.trim(),
+        }),
       })
       onSaved()
     } catch (err) {
@@ -235,37 +277,52 @@ function AddSessionModal({ onCancel, onSaved }: { onCancel: () => void; onSaved:
     <Modal transparent animationType="fade" onRequestClose={onCancel}>
       <Pressable style={styles.modalOverlay} onPress={onCancel}>
         <Pressable style={styles.modalCard} onPress={e => e.stopPropagation()}>
-          <Text style={styles.modalTitle}>{t('club.sparring.add')}</Text>
+          <ScrollView>
+            <Text style={styles.modalTitle}>{t('club.sparring.add')}</Text>
 
-          <Field label={t('club.sparring.discipline')}>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-              {DISCIPLINES.map(d => (
-                <Pressable key={d} onPress={() => setDiscipline(d)} style={[styles.pill, discipline === d && styles.pillActive]}>
-                  <Text style={[styles.pillLabel, discipline === d && styles.pillLabelActive]}>{d}</Text>
-                </Pressable>
-              ))}
+            <Field label={t('club.sparring.discipline')}>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                {DISCIPLINES.map(d => (
+                  <Pressable key={d} onPress={() => setDiscipline(d)} style={[styles.pill, discipline === d && styles.pillActive]}>
+                    <Text style={[styles.pillLabel, discipline === d && styles.pillLabelActive]}>{d}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            </Field>
+            <Field label={t('club.sparring.location')}><TextInput style={styles.input} value={location} onChangeText={setLocation} placeholderTextColor={MUTED} /></Field>
+            <View style={{ flexDirection: 'row', gap: 10 }}>
+              <View style={{ flex: 1 }}><Field label={t('club.sparring.date')}><DatePickerField value={date} onChange={setDate} placeholder={t('club.sparring.datePlaceholder')} /></Field></View>
+              <View style={{ flex: 1 }}><Field label={t('club.sparring.time')}><TextInput style={styles.input} value={time} onChangeText={setTime} placeholder={t('club.sparring.timePlaceholder')} placeholderTextColor={MUTED} /></Field></View>
             </View>
-          </Field>
-          <Field label={t('club.sparring.location')}><TextInput style={styles.input} value={location} onChangeText={setLocation} placeholderTextColor={MUTED} /></Field>
-          <View style={{ flexDirection: 'row', gap: 10 }}>
-            <View style={{ flex: 1 }}><Field label={t('club.sparring.date')}><DatePickerField value={date} onChange={setDate} placeholder={t('club.sparring.datePlaceholder')} /></Field></View>
-            <View style={{ flex: 1 }}><Field label={t('club.sparring.time')}><TextInput style={styles.input} value={time} onChangeText={setTime} placeholder={t('club.sparring.timePlaceholder')} placeholderTextColor={MUTED} /></Field></View>
-          </View>
-          <Field label={t('club.sparring.weightRange')}><TextInput style={styles.input} value={weightRange} onChangeText={setWeightRange} placeholder="70-80 KG" placeholderTextColor={MUTED} /></Field>
-          <Field label={t('club.sparring.level')}>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-              {LEVELS.map(l => (
-                <Pressable key={l} onPress={() => setLevel(l)} style={[styles.pill, level === l && styles.pillActive]}>
-                  <Text style={[styles.pillLabel, level === l && styles.pillLabelActive]}>{l}</Text>
-                </Pressable>
-              ))}
-            </View>
-          </Field>
-          <Field label={t('club.sparring.spots')}><TextInput style={styles.input} value={spots} onChangeText={setSpots} keyboardType="number-pad" /></Field>
+            <Field label={t('club.sparring.weightRange')}><TextInput style={styles.input} value={weightRange} onChangeText={setWeightRange} placeholder="70-80 KG" placeholderTextColor={MUTED} /></Field>
+            <Field label={t('club.sparring.level')}>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                {LEVELS.map(l => (
+                  <Pressable key={l} onPress={() => setLevels(prev => toggleLevel(prev, l))} style={[styles.pill, levels.includes(l) && styles.pillActive]}>
+                    <Text style={[styles.pillLabel, levels.includes(l) && styles.pillLabelActive]}>{l}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            </Field>
+            <Field label={t('club.sparring.spots')}>
+              <TextInput style={styles.input} value={spots} onChangeText={setSpots} keyboardType="number-pad" placeholder={t('club.sparring.spotsHint')} placeholderTextColor={MUTED} />
+            </Field>
+            <Field label={t('club.sparring.message')}>
+              <TextInput
+                style={[styles.input, styles.messageInput]}
+                value={message}
+                onChangeText={setMessage}
+                placeholder={t('club.sparring.messagePlaceholder')}
+                placeholderTextColor={MUTED}
+                multiline
+                numberOfLines={3}
+              />
+            </Field>
 
-          {error && <Text style={styles.errorText}>{error}</Text>}
-          <Button label={saving ? t('login.pleaseWait') : t('common.save')} onPress={submit} disabled={saving} style={{ marginTop: 8 }} />
-          <Button label={t('common.cancel')} variant="ghost" onPress={onCancel} />
+            {error && <Text style={styles.errorText}>{error}</Text>}
+            <Button label={saving ? t('login.pleaseWait') : t('common.save')} onPress={submit} disabled={saving} style={{ marginTop: 8 }} />
+            <Button label={t('common.cancel')} variant="ghost" onPress={onCancel} />
+          </ScrollView>
         </Pressable>
       </Pressable>
     </Modal>
@@ -322,10 +379,13 @@ const styles = StyleSheet.create({
   card: { backgroundColor: CARD, borderWidth: 1, borderColor: BORDER, borderRadius: 4, padding: 16 },
   cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
   spotsText: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 11, letterSpacing: 0.6, textTransform: 'uppercase' },
+  closedBadge: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 10, letterSpacing: 0.8, color: MUTED, textTransform: 'uppercase' },
+  infoBox: { fontFamily: FONT_BODY, fontSize: 12, fontStyle: 'italic', color: MUTED, backgroundColor: INPUT_BG, borderRadius: 4, padding: 10, marginTop: 8 },
+  messageInput: { minHeight: 72, textAlignVertical: 'top' },
   cardDiscipline: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 10, letterSpacing: 1, color: ACCENT, textTransform: 'uppercase', marginBottom: 4 },
   cardTitle: { fontFamily: FONT_DISPLAY, fontSize: 20, textTransform: 'uppercase', color: TEXT },
   cardMeta: { fontFamily: FONT_BODY, fontSize: 12, color: MUTED, marginTop: 2 },
-  actionRow: { flexDirection: 'row', gap: 8, marginTop: 12 },
+  actionRow: { flexDirection: 'row', gap: 8, marginTop: 12, flexWrap: 'wrap' },
   actionButton: { paddingVertical: 8, paddingHorizontal: 14 },
   browseScroll: { maxHeight: 420 },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center', padding: 20 },
