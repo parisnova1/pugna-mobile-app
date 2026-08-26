@@ -1,144 +1,124 @@
 import { useEffect, useState } from 'react'
-import { View, Text, TextInput, ScrollView, Pressable, StyleSheet } from 'react-native'
+import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native'
+import { router } from 'expo-router'
 import { apiFetch } from '@/lib/api'
+import { formatDisplayDate } from '@/lib/date'
 import { useAuth } from '@/auth/AuthContext'
 import { useLanguage } from '@/i18n/LanguageContext'
 import Screen from '@/components/Screen'
 import Spinner from '@/components/Spinner'
-import ErrorBoundary from '@/components/ErrorBoundary'
 import Button from '@/components/Button'
-import { ACCENT, ON_ACCENT, TEXT, BORDER, MUTED, INPUT_BG, FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_BODY } from '@/theme'
+import Card from '@/components/Card'
+import StatTile from '@/components/StatTile'
+import LiveBadge from '@/components/LiveBadge'
+import ErrorBoundary from '@/components/ErrorBoundary'
+import { ACCENT, TEXT, BORDER, MUTED, FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_BODY } from '@/theme'
 
-type Club = {
-  id: number; name: string; location: string; disciplines: string[]; founded_year: number | null
-  member_count: number; description: string; logo_url: string; cover_url: string
+type Session = { id: number; location: string; date: string; time: string; registered_fighters: number; spots: number }
+type OwnEvent = { id: number; name: string; date: string; location: string; status: string }
+type ClubEvent = { id: number; name: string; date: string; location: string; qr_token: string; status: string; has_live_bout: number }
+
+export default function ClubHomeScreen() {
+  return <ErrorBoundary><ClubHomeInner /></ErrorBoundary>
 }
 
-const DISCIPLINES = ['Boxing', 'Kickboxing', 'Muay Thai', 'MMA', 'BJJ', 'Wrestling']
-
-export default function ClubDetailsScreen() {
-  return <ErrorBoundary><ClubDetailsInner /></ErrorBoundary>
-}
-
-function ClubDetailsInner() {
-  const { logout } = useAuth()
+function ClubHomeInner() {
+  const { user } = useAuth()
   const { t } = useLanguage()
   const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  const [name, setName] = useState('')
-  const [location, setLocation] = useState('')
-  const [disciplines, setDisciplines] = useState<string[]>([])
-  const [foundedYear, setFoundedYear] = useState('')
-  const [memberCount, setMemberCount] = useState('')
-  const [description, setDescription] = useState('')
-  const [logoUrl, setLogoUrl] = useState('')
-  const [coverUrl, setCoverUrl] = useState('')
+  const [sessions, setSessions] = useState<Session[]>([])
+  const [ownEvents, setOwnEvents] = useState<OwnEvent[]>([])
+  const [clubEvents, setClubEvents] = useState<ClubEvent[]>([])
 
   useEffect(() => {
-    apiFetch<{ club: Club }>('/api/clubs/me')
-      .then(r => {
-        setName(r.club.name)
-        setLocation(r.club.location ?? '')
-        setDisciplines(r.club.disciplines ?? [])
-        setFoundedYear(r.club.founded_year ? String(r.club.founded_year) : '')
-        setMemberCount(r.club.member_count ? String(r.club.member_count) : '')
-        setDescription(r.club.description ?? '')
-        setLogoUrl(r.club.logo_url ?? '')
-        setCoverUrl(r.club.cover_url ?? '')
-      })
+    Promise.all([
+      apiFetch<{ sessions: Session[] }>('/api/sparring/me'),
+      apiFetch<{ events: OwnEvent[] }>('/api/events'),
+      apiFetch<{ events: ClubEvent[] }>('/api/clubs/me/events'),
+    ])
+      .then(([s, e, ce]) => { setSessions(s.sessions); setOwnEvents(e.events); setClubEvents(ce.events) })
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [])
 
-  const toggleDiscipline = (d: string) => {
-    setDisciplines(prev => (prev.includes(d) ? prev.filter(x => x !== d) : [...prev, d]))
-  }
-
-  const save = async () => {
-    setSaving(true)
-    setError(null)
-    setSaved(false)
-    try {
-      await apiFetch('/api/clubs/me', {
-        method: 'PATCH',
-        body: JSON.stringify({
-          name: name.trim(), location: location.trim(), disciplines,
-          foundedYear: foundedYear ? Number(foundedYear) : undefined,
-          memberCount: memberCount ? Number(memberCount) : undefined,
-          description: description.trim(), logoUrl: logoUrl.trim(), coverUrl: coverUrl.trim(),
-        }),
-      })
-      setSaved(true)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('login.errorGeneric'))
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  if (loading) return <Screen><View style={styles.centerFill}><Spinner /></View></Screen>
+  const todayIso = new Date().toISOString().slice(0, 10)
+  const nextSession = sessions.filter(s => s.date >= todayIso).sort((a, b) => a.date.localeCompare(b.date))[0]
+  const nextEvent = ownEvents.filter(e => e.date >= todayIso).sort((a, b) => a.date.localeCompare(b.date))[0]
+  const liveEvent = clubEvents.find(e => e.has_live_bout)
 
   return (
     <Screen>
       <ScrollView contentContainerStyle={styles.scroll}>
-        <View style={styles.headerRow}>
-          <Text style={styles.title}>{t('club.details.title')}</Text>
-          <Pressable onPress={() => logout()}><Text style={styles.logout}>{t('header.logOut')}</Text></Pressable>
+        <Text style={styles.greeting}>{t('club.home.greeting', { name: user?.name.split(' ')[0] ?? '' })}</Text>
+        <Text style={styles.subGreeting}>{t('club.home.subGreeting')}</Text>
+
+        <View style={styles.quickActions}>
+          <Button label={t('club.home.createSparring')} onPress={() => router.push('/club-admin/sessions?create=1')} style={styles.quickAction} />
+          <Button label={t('club.home.createEvent')} onPress={() => router.push('/club-admin/my-events?create=1')} style={styles.quickAction} />
+          <Button label={t('club.home.findSparring')} variant="outline" onPress={() => router.push('/club-admin/sparring')} style={styles.quickAction} />
+          <Button label={t('club.home.findEvent')} variant="outline" onPress={() => router.push('/club-admin/events')} style={styles.quickAction} />
         </View>
 
-        <Field label={t('club.details.name')}><TextInput style={styles.input} value={name} onChangeText={setName} placeholderTextColor={MUTED} /></Field>
-        <Field label={t('club.details.location')}><TextInput style={styles.input} value={location} onChangeText={setLocation} placeholder="City, Region" placeholderTextColor={MUTED} /></Field>
+        {loading ? (
+          <View style={{ paddingVertical: 24, alignItems: 'center' }}><Spinner /></View>
+        ) : (
+          <>
+            {liveEvent && (
+              <View style={{ marginBottom: 24 }}>
+                <Text style={styles.sectionLabel}>{t('club.home.liveNow')}</Text>
+                <Card onPress={() => router.push(`/events/${liveEvent.id}`)}>
+                  <LiveBadge />
+                  <Text style={styles.eventTitle}>{liveEvent.name}</Text>
+                  <Text style={styles.eventMeta}>{liveEvent.location}</Text>
+                </Card>
+              </View>
+            )}
 
-        <Field label={t('club.details.disciplines')}>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-            {DISCIPLINES.map(d => (
-              <Pressable key={d} onPress={() => toggleDiscipline(d)} style={[styles.pill, disciplines.includes(d) && styles.pillActive]}>
-                <Text style={[styles.pillLabel, disciplines.includes(d) && styles.pillLabelActive]}>{d}</Text>
-              </Pressable>
-            ))}
-          </View>
-        </Field>
+            <Text style={styles.sectionLabel}>{t('club.home.today')}</Text>
+            <View style={{ gap: 10, marginBottom: 24 }}>
+              {nextSession && (
+                <Card>
+                  <Text style={styles.cardEyebrow}>{t('club.home.sparringSession')}</Text>
+                  <Text style={styles.eventTitle}>{nextSession.location}</Text>
+                  <Text style={styles.eventMeta}>{formatDisplayDate(nextSession.date)} · {nextSession.time} · {t('club.home.fightersConfirmed', { count: nextSession.registered_fighters })}</Text>
+                  <Button label={t('organizer.events.manage')} variant="outline" onPress={() => router.push('/club-admin/sessions')} style={{ marginTop: 12, alignSelf: 'flex-start' }} />
+                </Card>
+              )}
+              {nextEvent && (
+                <Card>
+                  <Text style={styles.cardEyebrow}>{t('club.home.upcomingEvent')}</Text>
+                  <Text style={styles.eventTitle}>{nextEvent.name}</Text>
+                  <Text style={styles.eventMeta}>{formatDisplayDate(nextEvent.date)} · {nextEvent.location}</Text>
+                  <Button label={t('common.viewArrow')} variant="outline" onPress={() => router.push(`/organizer-events/${nextEvent.id}`)} style={{ marginTop: 12, alignSelf: 'flex-start' }} />
+                </Card>
+              )}
+              {!nextSession && !nextEvent && (
+                <Text style={styles.emptyText}>{t('club.home.noActivity')}</Text>
+              )}
+            </View>
 
-        <View style={{ flexDirection: 'row', gap: 10 }}>
-          <View style={{ flex: 1 }}><Field label={t('club.details.founded')}><TextInput style={styles.input} value={foundedYear} onChangeText={setFoundedYear} keyboardType="number-pad" placeholderTextColor={MUTED} /></Field></View>
-          <View style={{ flex: 1 }}><Field label={t('club.details.members')}><TextInput style={styles.input} value={memberCount} onChangeText={setMemberCount} keyboardType="number-pad" placeholderTextColor={MUTED} /></Field></View>
-        </View>
-
-        <Field label={t('club.details.about')}>
-          <TextInput style={[styles.input, styles.textarea]} value={description} onChangeText={setDescription} placeholder={t('club.details.aboutPlaceholder')} placeholderTextColor={MUTED} multiline numberOfLines={4} />
-        </Field>
-        <Field label={t('club.details.logoUrl')}><TextInput style={styles.input} value={logoUrl} onChangeText={setLogoUrl} autoCapitalize="none" placeholderTextColor={MUTED} /></Field>
-        <Field label={t('club.details.coverUrl')}><TextInput style={styles.input} value={coverUrl} onChangeText={setCoverUrl} autoCapitalize="none" placeholderTextColor={MUTED} /></Field>
-
-        {error && <Text style={styles.errorText}>{error}</Text>}
-        {saved && <Text style={styles.savedText}>{t('club.details.saved')}</Text>}
-
-        <Button label={saving ? t('login.pleaseWait') : t('club.details.save')} onPress={save} disabled={saving} style={{ marginTop: 8 }} />
+            <Text style={styles.sectionLabel}>{t('club.home.overview')}</Text>
+            <View style={styles.statsRow}>
+              <StatTile value={sessions.length} label={t('club.home.statSessions')} onPress={() => router.push('/club-admin/sessions')} />
+              <StatTile value={ownEvents.length} label={t('club.home.statEvents')} onPress={() => router.push('/club-admin/my-events')} />
+            </View>
+          </>
+        )}
       </ScrollView>
     </Screen>
   )
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return <View style={{ marginBottom: 16 }}><Text style={styles.label}>{label}</Text>{children}</View>
-}
-
 const styles = StyleSheet.create({
-  centerFill: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   scroll: { padding: 20, paddingBottom: 40 },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 },
-  title: { fontFamily: FONT_DISPLAY, fontSize: 26, textTransform: 'uppercase', color: TEXT },
-  logout: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 12, letterSpacing: 0.6, color: MUTED, textTransform: 'uppercase', textDecorationLine: 'underline' },
-  label: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 11, letterSpacing: 1, color: MUTED, textTransform: 'uppercase', marginBottom: 6 },
-  input: { backgroundColor: INPUT_BG, borderWidth: 1, borderColor: BORDER, color: TEXT, padding: 12, borderRadius: 4, fontFamily: FONT_BODY, fontSize: 14 },
-  textarea: { minHeight: 90, textAlignVertical: 'top' },
-  pill: { borderWidth: 1, borderColor: BORDER, borderRadius: 9999, paddingVertical: 8, paddingHorizontal: 14 },
-  pillActive: { backgroundColor: ACCENT, borderColor: ACCENT },
-  pillLabel: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 11, letterSpacing: 0.6, color: MUTED, textTransform: 'uppercase' },
-  pillLabelActive: { color: ON_ACCENT },
-  errorText: { fontFamily: FONT_BODY, fontSize: 13, fontWeight: '700', color: TEXT, marginBottom: 8 },
-  savedText: { fontFamily: FONT_BODY, fontSize: 13, color: MUTED, marginBottom: 8 },
+  greeting: { fontFamily: FONT_DISPLAY, fontSize: 26, textTransform: 'uppercase', color: TEXT },
+  subGreeting: { fontFamily: FONT_BODY, fontSize: 13, color: MUTED, marginTop: 2, marginBottom: 20 },
+  quickActions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 28 },
+  quickAction: { paddingVertical: 10, paddingHorizontal: 16 },
+  sectionLabel: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 13, letterSpacing: 1, color: TEXT, textTransform: 'uppercase', marginBottom: 12 },
+  cardEyebrow: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 10, letterSpacing: 1, color: ACCENT, textTransform: 'uppercase', marginBottom: 6 },
+  eventTitle: { fontFamily: FONT_DISPLAY, fontSize: 19, textTransform: 'uppercase', color: TEXT, marginTop: 6 },
+  eventMeta: { fontFamily: FONT_BODY, fontSize: 12, color: MUTED, marginTop: 2 },
+  emptyText: { fontFamily: FONT_BODY, fontSize: 13, color: MUTED },
+  statsRow: { flexDirection: 'row', borderTopWidth: 1, borderBottomWidth: 1, borderColor: BORDER },
 })

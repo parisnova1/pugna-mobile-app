@@ -15,7 +15,7 @@ export type IconName =
   | 'hero' | 'glove' | 'whistle' | 'ring' | 'eye' | 'clipboard'
   | 'kick' | 'octagon' | 'belt' | 'elbow' | 'clinch'
   | 'broadcast' | 'bracket' | 'bell' | 'calendarMark'
-  | 'followPerson' | 'followClub' | 'scan' | 'calendarCheck'
+  | 'followPerson' | 'followClub' | 'scan' | 'calendarCheck' | 'settings'
 
 // Data-driven monochrome icon set (48x48, hero mark 160x160) — one shared
 // component instead of 19 near-identical SVG files, matching this redesign's
@@ -199,6 +199,21 @@ const ICONS: Record<IconName, IconDef> = {
       { t: 'line', x1: 15, y1: 5, x2: 15, y2: 13 },
       { t: 'line', x1: 33, y1: 5, x2: 33, y2: 13 },
       { t: 'path', d: 'M17 29 L22 34 L32 24' },
+    ],
+  },
+  settings: {
+    viewBox: '0 0 48 48',
+    prims: [
+      { t: 'circle', cx: 24, cy: 24, r: 8 },
+      { t: 'circle', cx: 24, cy: 24, r: 3, fill: true },
+      { t: 'line', x1: 24, y1: 4, x2: 24, y2: 12 },
+      { t: 'line', x1: 24, y1: 36, x2: 24, y2: 44 },
+      { t: 'line', x1: 4, y1: 24, x2: 12, y2: 24 },
+      { t: 'line', x1: 36, y1: 24, x2: 44, y2: 24 },
+      { t: 'line', x1: 10, y1: 10, x2: 15.5, y2: 15.5 },
+      { t: 'line', x1: 32.5, y1: 32.5, x2: 38, y2: 38 },
+      { t: 'line', x1: 38, y1: 10, x2: 32.5, y2: 15.5 },
+      { t: 'line', x1: 15.5, y1: 32.5, x2: 10, y2: 38 },
     ],
   },
 }
