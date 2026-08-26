@@ -6,6 +6,7 @@ import { useLanguage } from '@/i18n/LanguageContext'
 import Screen from '@/components/Screen'
 import Button from '@/components/Button'
 import SkipLink from '@/onboarding/SkipLink'
+import BackLink from '@/onboarding/BackLink'
 import { ACCENT, BORDER, TEXT, FONT_DISPLAY } from '@/theme'
 
 export default function WelcomeScreen() {
@@ -39,8 +40,15 @@ export default function WelcomeScreen() {
     }
   }
 
+  const retreat = () => {
+    const prev = page - 1
+    scrollRef.current?.scrollTo({ x: prev * width, animated: true })
+    setPage(prev)
+  }
+
   return (
     <Screen>
+      {page > 0 && <BackLink onPress={retreat} />}
       <SkipLink />
       <ScrollView
         ref={scrollRef}

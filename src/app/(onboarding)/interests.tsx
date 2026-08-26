@@ -7,6 +7,7 @@ import type { TranslationKey } from '@/i18n/translations'
 import Screen from '@/components/Screen'
 import Button from '@/components/Button'
 import SkipLink from '@/onboarding/SkipLink'
+import BackLink from '@/onboarding/BackLink'
 import { ACCENT, ON_ACCENT, BORDER, MUTED, TEXT, FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_BODY } from '@/theme'
 
 const DISCIPLINES = ['Boxing', 'Kickboxing', 'Muay Thai', 'MMA', 'BJJ', 'Wrestling']
@@ -35,6 +36,7 @@ export default function InterestsScreen() {
 
   return (
     <Screen>
+      <BackLink />
       <SkipLink />
       <View style={styles.content}>
         <Text style={styles.title}>{t('onboarding.interestsTitle')}</Text>

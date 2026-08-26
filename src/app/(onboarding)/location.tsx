@@ -6,6 +6,7 @@ import { useLanguage } from '@/i18n/LanguageContext'
 import Screen from '@/components/Screen'
 import Button from '@/components/Button'
 import SkipLink from '@/onboarding/SkipLink'
+import BackLink from '@/onboarding/BackLink'
 import { TEXT, BORDER, MUTED, INPUT_BG, FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_BODY } from '@/theme'
 
 export default function LocationScreen() {
@@ -21,6 +22,7 @@ export default function LocationScreen() {
   return (
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <Screen>
+        <BackLink />
         <SkipLink />
         <View style={styles.content}>
           <Text style={styles.title}>{t('onboarding.locationTitle')}</Text>

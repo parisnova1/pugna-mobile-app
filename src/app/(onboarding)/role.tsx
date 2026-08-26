@@ -5,6 +5,7 @@ import { useLanguage } from '@/i18n/LanguageContext'
 import type { Role } from '@/auth/AuthContext'
 import Screen from '@/components/Screen'
 import SkipLink from '@/onboarding/SkipLink'
+import BackLink from '@/onboarding/BackLink'
 import { ACCENT, ON_ACCENT, BORDER, MUTED, TEXT, FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_BODY } from '@/theme'
 
 const ROLES: Role[] = ['viewer', 'club', 'organizer']
@@ -20,6 +21,7 @@ export default function RoleScreen() {
 
   return (
     <Screen>
+      <BackLink />
       <SkipLink />
       <View style={styles.content}>
         <Text style={styles.title}>{t('onboarding.roleTitle')}</Text>

@@ -9,6 +9,7 @@ import { useLanguage } from '@/i18n/LanguageContext'
 import Screen from '@/components/Screen'
 import Button from '@/components/Button'
 import SkipLink from '@/onboarding/SkipLink'
+import BackLink from '@/onboarding/BackLink'
 import { ACCENT, BORDER, CARD, MUTED, TEXT, FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_BODY } from '@/theme'
 
 export default function PermissionsScreen() {
@@ -39,6 +40,7 @@ export default function PermissionsScreen() {
 
   return (
     <Screen>
+      <BackLink />
       <SkipLink />
       <View style={styles.content}>
         <Text style={styles.title}>{t('onboarding.permissionsTitle')}</Text>
