@@ -8,6 +8,7 @@ import Spinner from '@/components/Spinner'
 import EmptyState from '@/components/EmptyState'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import Button from '@/components/Button'
+import DatePickerField from '@/components/DatePickerField'
 import { ACCENT, ON_ACCENT, TEXT, CARD, BORDER, MUTED, INPUT_BG, FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_BODY } from '@/theme'
 
 type Session = { id: number; discipline: string; location: string; date: string; time: string; weight_range: string; level: string; spots: number; registered_fighters: number }
@@ -119,7 +120,7 @@ function AddSessionModal({ onCancel, onSaved }: { onCancel: () => void; onSaved:
           </Field>
           <Field label={t('club.sparring.location')}><TextInput style={styles.input} value={location} onChangeText={setLocation} placeholderTextColor={MUTED} /></Field>
           <View style={{ flexDirection: 'row', gap: 10 }}>
-            <View style={{ flex: 1 }}><Field label={t('club.sparring.date')}><TextInput style={styles.input} value={date} onChangeText={setDate} placeholder={t('club.sparring.datePlaceholder')} placeholderTextColor={MUTED} /></Field></View>
+            <View style={{ flex: 1 }}><Field label={t('club.sparring.date')}><DatePickerField value={date} onChange={setDate} placeholder={t('club.sparring.datePlaceholder')} /></Field></View>
             <View style={{ flex: 1 }}><Field label={t('club.sparring.time')}><TextInput style={styles.input} value={time} onChangeText={setTime} placeholder={t('club.sparring.timePlaceholder')} placeholderTextColor={MUTED} /></Field></View>
           </View>
           <Field label={t('club.sparring.weightRange')}><TextInput style={styles.input} value={weightRange} onChangeText={setWeightRange} placeholder="70-80 KG" placeholderTextColor={MUTED} /></Field>
