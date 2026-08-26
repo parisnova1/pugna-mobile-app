@@ -121,6 +121,8 @@ export const en = {
   'club.sparring.participants': 'Participants',
   'club.sparring.noParticipants': 'No clubs have joined yet.',
   'club.sparring.fighterCount': '{{count}} fighters',
+  'club.sparring.browseTitle': 'Available Sparring Sessions',
+  'club.sparring.browseNone': 'No other clubs have posted sparring sessions yet.',
   'club.fighters.title': 'Find Fighters',
 
   // ── Nav / header ──────────────────────────────────────────────────────
@@ -596,6 +598,8 @@ export const de: Record<TranslationKey, string> = {
   'club.sparring.participants': 'Teilnehmer',
   'club.sparring.noParticipants': 'Noch keine Vereine beigetreten.',
   'club.sparring.fighterCount': '{{count}} Kämpfer',
+  'club.sparring.browseTitle': 'Verfügbare Sparring-Termine',
+  'club.sparring.browseNone': 'Noch keine Sparring-Termine von anderen Vereinen.',
   'club.fighters.title': 'Kämpfer finden',
 
   'nav.discover': 'Entdecken',
