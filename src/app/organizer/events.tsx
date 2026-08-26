@@ -9,6 +9,7 @@ import Spinner from '@/components/Spinner'
 import EmptyState from '@/components/EmptyState'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import Button from '@/components/Button'
+import DatePickerField from '@/components/DatePickerField'
 import { ACCENT, ON_ACCENT, CARD, BORDER, MUTED, TEXT, INPUT_BG, FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_BODY } from '@/theme'
 
 type OrganizerEvent = {
@@ -130,7 +131,7 @@ function EventFormModal({ event, onCancel, onSaved }: { event: OrganizerEvent | 
               <TextInput style={styles.input} value={name} onChangeText={setName} placeholder={t('organizer.eventForm.namePlaceholder')} placeholderTextColor={MUTED} />
             </Field>
             <Field label={t('organizer.eventForm.date')}>
-              <TextInput style={styles.input} value={date} onChangeText={setDate} placeholder={t('organizer.eventForm.datePlaceholder')} placeholderTextColor={MUTED} />
+              <DatePickerField value={date} onChange={setDate} placeholder={t('organizer.eventForm.datePlaceholder')} />
             </Field>
             <Field label={t('organizer.eventForm.location')}>
               <TextInput style={styles.input} value={location} onChangeText={setLocation} placeholder={t('organizer.eventForm.locationPlaceholder')} placeholderTextColor={MUTED} />
