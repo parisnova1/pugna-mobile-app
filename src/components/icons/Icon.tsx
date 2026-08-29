@@ -18,7 +18,7 @@ export type IconName =
   | 'followPerson' | 'followClub' | 'scan' | 'calendarCheck' | 'settings'
   | 'close' | 'chevronBack' | 'chevronForward' | 'arrowForward' | 'search'
   | 'flash' | 'shield' | 'personCircle' | 'statsChart' | 'logout'
-  | 'bookmark' | 'share' | 'personAdd' | 'check'
+  | 'bookmark' | 'share' | 'personAdd' | 'check' | 'pin'
 
 // Data-driven monochrome icon set (48x48, hero mark 160x160) — one shared
 // component instead of 19 near-identical SVG files, matching this redesign's
@@ -310,6 +310,13 @@ const ICONS: Record<IconName, IconDef> = {
     ],
   },
   check: { viewBox: '0 0 48 48', prims: [{ t: 'path', d: 'M10 25 L20 35 L38 13' }] },
+  pin: {
+    viewBox: '0 0 48 48',
+    prims: [
+      { t: 'path', d: 'M24 4 C13 4 5 12 5 22 C5 34 24 44 24 44 C24 44 43 34 43 22 C43 12 35 4 24 4 Z' },
+      { t: 'circle', cx: 24, cy: 21, r: 6 },
+    ],
+  },
 }
 
 export function Icon({
