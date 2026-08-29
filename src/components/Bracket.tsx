@@ -1,5 +1,5 @@
 import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native'
-import { ACCENT, CARD, BORDER, MUTED, TEXT, BG, FONT_DISPLAY_BOLD } from '@/theme'
+import { ACCENT, CARD, BORDER, MUTED, TEXT, BG, SURFACE_STRONG, FONT_DISPLAY_BOLD } from '@/theme'
 
 export type Bout = {
   id: number
@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
   boutClickable: { borderColor: ACCENT },
   slot: { paddingVertical: 12, paddingHorizontal: 10 },
   slotBorder: { borderBottomWidth: 1, borderBottomColor: BORDER },
-  slotWinner: { backgroundColor: '#e8e8e8' },
+  slotWinner: { backgroundColor: SURFACE_STRONG },
   slotText: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 13, color: TEXT },
   slotTextMuted: { color: MUTED, textTransform: 'uppercase' },
   slotTextWinner: { color: TEXT, fontWeight: '800' },

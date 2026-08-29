@@ -540,7 +540,7 @@ const styles = StyleSheet.create({
   liveLabel: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 11, letterSpacing: 1, color: LIVE_RED, textTransform: 'uppercase' },
   liveFighters: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 13, color: TEXT, textTransform: 'uppercase', flex: 1, textAlign: 'right' },
   liveVs: { color: MUTED },
-  tabBar: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: BORDER, backgroundColor: BG, paddingHorizontal: 12 },
+  tabBar: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: BORDER, backgroundColor: CARD, paddingHorizontal: 12 },
   tabButton: { paddingVertical: 14, paddingHorizontal: 12 },
   tabLabel: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 13, letterSpacing: 0.8, color: MUTED, textTransform: 'uppercase' },
   tabLabelActive: { color: TEXT },

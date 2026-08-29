@@ -1,5 +1,5 @@
 import { ScrollView, Pressable, Text, View, StyleSheet } from 'react-native'
-import { ACCENT, ON_ACCENT, TEXT, BORDER, MUTED, FONT_DISPLAY_BOLD } from '@/theme'
+import { ACCENT, ON_ACCENT, BORDER, MUTED, LIVE_RED, FONT_DISPLAY_BOLD } from '@/theme'
 
 export type EventDay = { id: number; day_index: number; date: string; label: string; status: 'scheduled' | 'live' | 'completed' }
 
@@ -25,7 +25,7 @@ const styles = StyleSheet.create({
   row: { gap: 8, paddingBottom: 4 },
   pill: { flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderColor: BORDER, borderRadius: 9999, paddingVertical: 8, paddingHorizontal: 14 },
   pillActive: { backgroundColor: ACCENT, borderColor: ACCENT },
-  liveDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#ff453a' },
+  liveDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: LIVE_RED },
   label: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 12, letterSpacing: 0.6, color: MUTED, textTransform: 'uppercase' },
   labelActive: { color: ON_ACCENT },
 })

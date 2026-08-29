@@ -11,7 +11,7 @@ import SkipLink from '@/onboarding/SkipLink'
 import BackLink from '@/onboarding/BackLink'
 import StepIndicator from '@/onboarding/StepIndicator'
 import { TOTAL_STEPS } from '@/onboarding/steps'
-import { ACCENT, ON_ACCENT, TEXT, MUTED, FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_BODY } from '@/theme'
+import { ACCENT, ON_ACCENT, TEXT, MUTED, CARD, FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_BODY } from '@/theme'
 
 // 4 onboarding personas, per the redesign brief. Only 'club' maps to a real
 // distinct backend role — athlete/coach/fan all become role 'viewer' (the
@@ -84,7 +84,7 @@ const styles = StyleSheet.create({
   subtitle: { fontFamily: FONT_BODY, fontSize: 14, color: MUTED, textAlign: 'center', marginBottom: 28 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'space-between' },
   tile: { width: '48%', alignItems: 'flex-start', gap: 4 },
-  tileIcon: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#ffffff', alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
+  tileIcon: { width: 44, height: 44, borderRadius: 22, backgroundColor: CARD, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
   tileIconSelected: { backgroundColor: ACCENT },
   tileTitle: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 15, color: TEXT, textTransform: 'uppercase' },
   tileSub: { fontFamily: FONT_BODY, fontSize: 12, color: MUTED, lineHeight: 16 },

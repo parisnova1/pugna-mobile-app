@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
   centerFill: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   list: { paddingHorizontal: 16, paddingBottom: 24, gap: 10 },
   card: { flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: CARD, borderWidth: 1, borderColor: BORDER, borderRadius: 4, padding: 14 },
-  avatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#e5e5e5', alignItems: 'center', justifyContent: 'center' },
+  avatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: CARD, alignItems: 'center', justifyContent: 'center' },
   avatarText: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 16, color: ACCENT },
   cardTitle: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 15, color: TEXT, textTransform: 'uppercase' },
   testBadge: { borderWidth: 1, borderColor: TEXT, borderRadius: 4, paddingVertical: 1, paddingHorizontal: 6 },

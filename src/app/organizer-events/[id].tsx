@@ -950,7 +950,7 @@ const styles = StyleSheet.create({
   editLink: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 11, letterSpacing: 0.8, color: TEXT, textTransform: 'uppercase', textDecorationLine: 'underline' },
   title: { fontFamily: FONT_DISPLAY, fontSize: 26, textTransform: 'uppercase', color: TEXT, marginBottom: 6 },
   meta: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 12, letterSpacing: 0.6, color: MUTED, textTransform: 'uppercase' },
-  tabBar: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: BORDER, backgroundColor: '#fff', paddingHorizontal: 12 },
+  tabBar: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: BORDER, backgroundColor: CARD, paddingHorizontal: 12 },
   tabButton: { paddingVertical: 14, paddingHorizontal: 12 },
   tabLabel: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 13, letterSpacing: 0.6, color: MUTED, textTransform: 'uppercase' },
   tabLabelActive: { color: TEXT },

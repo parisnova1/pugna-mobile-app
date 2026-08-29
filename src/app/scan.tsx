@@ -7,7 +7,7 @@ import { apiFetch } from '@/lib/api'
 import { extractEventIdentifier } from '@/lib/parsePugnaUrl'
 import { useLanguage } from '@/i18n/LanguageContext'
 import Button from '@/components/Button'
-import { TEXT, BORDER, MUTED, BG, INPUT_BG, FONT_DISPLAY, FONT_BODY } from '@/theme'
+import { TEXT, BORDER, MUTED, BG, INPUT_BG, MODAL_SCRIM, FONT_DISPLAY, FONT_BODY } from '@/theme'
 
 export default function ScanScreen() {
   const { t } = useLanguage()
@@ -89,11 +89,11 @@ function ManualEntry({ value, onChange, onSubmit, t }: { value: string; onChange
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: '#000' },
+  flex: { flex: 1, backgroundColor: BG },
   close: { position: 'absolute', top: 56, right: 20, zIndex: 2, padding: 6 },
   camera: { flex: 1 },
   overlay: { position: 'absolute', bottom: 60, left: 0, right: 0, alignItems: 'center' },
-  scanHint: { fontFamily: FONT_DISPLAY, fontSize: 13, color: '#fff', textTransform: 'uppercase', backgroundColor: 'rgba(0,0,0,0.6)', paddingVertical: 8, paddingHorizontal: 16, borderRadius: 4 },
+  scanHint: { fontFamily: FONT_DISPLAY, fontSize: 13, color: TEXT, textTransform: 'uppercase', backgroundColor: MODAL_SCRIM, paddingVertical: 8, paddingHorizontal: 16, borderRadius: 4 },
   centerFill: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 28 },
   title: { fontFamily: FONT_DISPLAY, fontSize: 22, textTransform: 'uppercase', color: TEXT, marginBottom: 12, textAlign: 'center' },
   errorText: { fontFamily: FONT_BODY, fontSize: 14, fontWeight: '700', color: TEXT, textAlign: 'center', marginBottom: 8 },

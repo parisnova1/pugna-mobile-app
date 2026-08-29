@@ -7,7 +7,7 @@ import { useLanguage } from '@/i18n/LanguageContext'
 import Screen from '@/components/Screen'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import Button from '@/components/Button'
-import { TEXT, MUTED, BORDER, ACCENT, INPUT_BG, FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_BODY } from '@/theme'
+import { TEXT, MUTED, BORDER, ACCENT, ON_ACCENT, INPUT_BG, FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_BODY } from '@/theme'
 
 const NOTIFICATION_TYPES = ['event.live', 'bout.result', 'event.stream', 'nomination.accepted', 'nomination.injured'] as const
 
@@ -80,7 +80,9 @@ const styles = StyleSheet.create({
   alertLabel: { fontFamily: FONT_BODY, fontSize: 13, color: TEXT },
   toggle: { width: 40, height: 22, borderRadius: 11, backgroundColor: BORDER, padding: 2, justifyContent: 'center' },
   toggleOn: { backgroundColor: ACCENT },
-  toggleKnob: { width: 18, height: 18, borderRadius: 9, backgroundColor: '#fff' },
-  toggleKnobOn: { alignSelf: 'flex-end' },
+  toggleKnob: { width: 18, height: 18, borderRadius: 9, backgroundColor: TEXT },
+  // ACCENT (the "on" track fill) is white, so the knob needs to flip to a
+  // dark fill in that state or it disappears against its own track.
+  toggleKnobOn: { alignSelf: 'flex-end', backgroundColor: ON_ACCENT },
   timeInput: { flex: 1, backgroundColor: INPUT_BG, borderWidth: 1, borderColor: BORDER, color: TEXT, padding: 12, borderRadius: 4, fontFamily: FONT_BODY, fontSize: 14, textAlign: 'center' },
 })
