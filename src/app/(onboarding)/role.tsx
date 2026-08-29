@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
 import { useOnboarding, type Persona } from '@/onboarding/OnboardingContext'
@@ -6,88 +7,98 @@ import type { TranslationKey } from '@/i18n/translations'
 import type { Role } from '@/auth/AuthContext'
 import { Icon, type IconName } from '@/components/icons/Icon'
 import Screen from '@/components/Screen'
-import Card from '@/components/Card'
-import SkipLink from '@/onboarding/SkipLink'
-import BackLink from '@/onboarding/BackLink'
+import CenteredColumn from '@/components/CenteredColumn'
+import GlassSurface from '@/components/glass/GlassSurface'
+import Button from '@/components/Button'
 import StepIndicator from '@/onboarding/StepIndicator'
-import { TOTAL_STEPS } from '@/onboarding/steps'
-import { ACCENT, ON_ACCENT, TEXT, MUTED, CARD, FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_BODY } from '@/theme'
+import { mainFlowStepNumber, MAIN_FLOW_TOTAL } from '@/onboarding/steps'
+import { TEXT, MUTED, CARD, BORDER, ACCENT, ON_ACCENT, FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_BODY } from '@/theme'
 
-// 4 onboarding personas, per the redesign brief. Only 'club' maps to a real
-// distinct backend role — athlete/coach/fan all become role 'viewer' (the
-// backend has no concept of athlete/coach; see OnboardingContext.tsx's
-// Persona type comment). Organizer is real and load-bearing in this app but
-// deliberately not one of these 4 tiles — it gets its own smaller link below,
-// so the primary choice doesn't get diluted with a 5th tile most viewers,
-// athletes, coaches, and clubs would never pick.
-const TILES: { persona: Persona; icon: IconName; titleKey: TranslationKey; subKey: TranslationKey }[] = [
-  { persona: 'athlete', icon: 'glove', titleKey: 'onboarding.persona.athlete', subKey: 'onboarding.persona.athleteSub' },
-  { persona: 'coach', icon: 'whistle', titleKey: 'onboarding.persona.coach', subKey: 'onboarding.persona.coachSub' },
-  { persona: 'club', icon: 'ring', titleKey: 'onboarding.persona.club', subKey: 'onboarding.persona.clubSub' },
-  { persona: 'fan', icon: 'eye', titleKey: 'onboarding.persona.fan', subKey: 'onboarding.persona.fanSub' },
+// The 3 personas the current product actually has, each mapping 1:1 onto
+// the real backend role — no separate athlete/coach/fan breakdown anymore
+// (that older, finer split still exists for viewer-goals.tsx and friends,
+// which this flow no longer routes to, but stays reachable — see
+// OnboardingContext's Persona comment).
+const CARDS: { persona: Persona; role: Role; icon: IconName; titleKey: TranslationKey; subKey: TranslationKey }[] = [
+  { persona: 'fan', role: 'viewer', icon: 'eye', titleKey: 'onboarding.persona.viewer', subKey: 'onboarding.persona.viewerSub' },
+  { persona: 'organizer', role: 'organizer', icon: 'bracket', titleKey: 'onboarding.persona.organizer', subKey: 'onboarding.persona.organizerSub' },
+  { persona: 'club', role: 'club', icon: 'ring', titleKey: 'onboarding.persona.club', subKey: 'onboarding.persona.clubSub' },
 ]
 
 export default function RoleScreen() {
   const { t } = useLanguage()
-  const { persona, setPersona, setRole, finishOnboarding } = useOnboarding()
+  const { persona, setPersona, setRole } = useOnboarding()
+  const [selected, setSelected] = useState<Persona | null>(
+    persona && CARDS.some(c => c.persona === persona) ? persona : null,
+  )
 
-  const choose = (p: Persona) => {
-    setPersona(p)
-    const role: Role = p === 'club' ? 'club' : 'viewer'
-    setRole(role)
-    router.push(p === 'club' ? '/(onboarding)/club-info' : '/(onboarding)/viewer-goals')
-  }
-
-  const chooseOrganizer = async () => {
-    // Organizer signup is a fully separate, already-built flow — onboarding's
-    // job here is done, so it finishes now rather than leaving the flag
-    // unset and re-triggering onboarding if the user backs out of signup.
-    await finishOnboarding()
-    router.replace({ pathname: '/(auth)/signup', params: { role: 'organizer' } })
+  const confirm = () => {
+    const card = CARDS.find(c => c.persona === selected)
+    if (!card) return
+    setPersona(card.persona)
+    setRole(card.role)
+    router.push('/(onboarding)/location')
   }
 
   return (
     <Screen>
-      <BackLink />
-      <SkipLink />
-      <ScrollView contentContainerStyle={styles.content}>
-        <StepIndicator current={2} total={TOTAL_STEPS.fan} />
-        <Text style={styles.title}>{t('onboarding.roleTitle')}</Text>
-        <Text style={styles.subtitle}>{t('onboarding.roleSubtitle')}</Text>
+      <CenteredColumn style={styles.content}>
+        <ScrollView contentContainerStyle={styles.scroll}>
+          <StepIndicator current={mainFlowStepNumber('role')} total={MAIN_FLOW_TOTAL} />
+          <Text style={styles.title}>{t('onboarding.roleTitle')}</Text>
+          <Text style={styles.subtitle}>{t('onboarding.roleSubtitle')}</Text>
 
-        <View style={styles.grid}>
-          {TILES.map(tile => {
-            const selected = persona === tile.persona
-            return (
-              <Card key={tile.persona} onPress={() => choose(tile.persona)} selected={selected} style={styles.tile}>
-                <View style={[styles.tileIcon, selected && styles.tileIconSelected]}>
-                  <Icon name={tile.icon} size={26} color={selected ? ON_ACCENT : TEXT} />
-                </View>
-                <Text style={styles.tileTitle}>{t(tile.titleKey)}</Text>
-                <Text style={styles.tileSub}>{t(tile.subKey)}</Text>
-              </Card>
-            )
-          })}
+          <View style={styles.stack}>
+            {CARDS.map(card => {
+              const isSelected = selected === card.persona
+              const content = (
+                <>
+                  <Icon name={card.icon} size={24} color={TEXT} />
+                  <View style={styles.cardText}>
+                    <Text style={styles.cardTitle}>{t(card.titleKey)}</Text>
+                    <Text style={styles.cardSub}>{t(card.subKey)}</Text>
+                  </View>
+                  {isSelected && (
+                    <View style={styles.check}>
+                      <Icon name="check" size={14} color={ON_ACCENT} />
+                    </View>
+                  )}
+                </>
+              )
+              return (
+                <Pressable key={card.persona} onPress={() => setSelected(card.persona)}>
+                  {isSelected ? (
+                    <GlassSurface variant="card" strong style={styles.card}>
+                      {content}
+                    </GlassSurface>
+                  ) : (
+                    <View style={[styles.card, styles.cardFlat]}>{content}</View>
+                  )}
+                </Pressable>
+              )
+            })}
+          </View>
+        </ScrollView>
+
+        <View style={styles.footer}>
+          <Button label={t('onboarding.next')} uppercase={false} disabled={!selected} onPress={confirm} />
         </View>
-
-        <Pressable onPress={chooseOrganizer} style={styles.organizerLink} hitSlop={8}>
-          <Text style={styles.organizerLinkText}>{t('onboarding.organizerLink')}</Text>
-        </Pressable>
-      </ScrollView>
+      </CenteredColumn>
     </Screen>
   )
 }
 
 const styles = StyleSheet.create({
-  content: { flexGrow: 1, padding: 28, paddingTop: 100, paddingBottom: 40, justifyContent: 'center' },
-  title: { fontFamily: FONT_DISPLAY, fontSize: 28, textTransform: 'uppercase', color: TEXT, marginBottom: 8, textAlign: 'center' },
-  subtitle: { fontFamily: FONT_BODY, fontSize: 14, color: MUTED, textAlign: 'center', marginBottom: 28 },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'space-between' },
-  tile: { width: '48%', alignItems: 'flex-start', gap: 4 },
-  tileIcon: { width: 44, height: 44, borderRadius: 22, backgroundColor: CARD, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
-  tileIconSelected: { backgroundColor: ACCENT },
-  tileTitle: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 15, color: TEXT, textTransform: 'uppercase' },
-  tileSub: { fontFamily: FONT_BODY, fontSize: 12, color: MUTED, lineHeight: 16 },
-  organizerLink: { alignSelf: 'center', marginTop: 24, padding: 4 },
-  organizerLinkText: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 12, letterSpacing: 0.6, color: MUTED, textTransform: 'uppercase' },
+  content: { flex: 1 },
+  scroll: { padding: 28, paddingTop: 60, paddingBottom: 20 },
+  title: { fontFamily: FONT_DISPLAY, fontSize: 26, color: TEXT, marginTop: 20, marginBottom: 6 },
+  subtitle: { fontFamily: FONT_BODY, fontSize: 15, color: MUTED, marginBottom: 28 },
+  stack: { gap: 12 },
+  card: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 18, borderRadius: 16 },
+  cardFlat: { backgroundColor: CARD, borderWidth: 1, borderColor: BORDER },
+  cardText: { flex: 1 },
+  cardTitle: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 16, color: TEXT },
+  cardSub: { fontFamily: FONT_BODY, fontSize: 13, color: MUTED, marginTop: 2 },
+  check: { width: 24, height: 24, borderRadius: 12, backgroundColor: ACCENT, alignItems: 'center', justifyContent: 'center' },
+  footer: { padding: 28, paddingTop: 0 },
 })
