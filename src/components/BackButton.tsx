@@ -1,6 +1,6 @@
 import { Pressable, Text, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
-import { Ionicons } from '@expo/vector-icons'
+import { Icon } from './icons/Icon'
 import { MUTED, FONT_DISPLAY_BOLD } from '@/theme'
 import { useLanguage } from '@/i18n/LanguageContext'
 
@@ -8,7 +8,7 @@ export default function BackButton() {
   const { t } = useLanguage()
   return (
     <Pressable onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} style={styles.row} hitSlop={12}>
-      <Ionicons name="chevron-back" size={18} color={MUTED} />
+      <Icon name="chevronBack" size={18} color={MUTED} />
       <Text style={styles.label}>{t('common.back')}</Text>
     </Pressable>
   )

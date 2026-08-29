@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { View, Text, TextInput, StyleSheet, Pressable, KeyboardAvoidingView, Platform, ScrollView } from 'react-native'
 import { router, useLocalSearchParams } from 'expo-router'
-import { Ionicons } from '@expo/vector-icons'
+import { Icon } from '@/components/icons/Icon'
 import { useAuth, type Role } from '@/auth/AuthContext'
 import { useLanguage } from '@/i18n/LanguageContext'
 import Button from '@/components/Button'
@@ -39,7 +39,7 @@ export default function LoginScreen() {
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <Pressable onPress={() => router.back()} style={styles.close} hitSlop={12}>
-          <Ionicons name="close" size={22} color={MUTED} />
+          <Icon name="close" size={22} color={MUTED} />
         </Pressable>
 
         <Text style={styles.eyebrow}>{t('login.welcomeBack')}</Text>

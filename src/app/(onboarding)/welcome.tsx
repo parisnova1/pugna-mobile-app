@@ -1,7 +1,6 @@
 import { useRef, useState } from 'react'
 import { View, Text, Pressable, ScrollView, StyleSheet, useWindowDimensions, type NativeSyntheticEvent, type NativeScrollEvent } from 'react-native'
 import { router } from 'expo-router'
-import { Ionicons } from '@expo/vector-icons'
 import { useLanguage } from '@/i18n/LanguageContext'
 import { Icon } from '@/components/icons/Icon'
 import Screen from '@/components/Screen'
@@ -20,9 +19,9 @@ export default function WelcomeScreen() {
   // and 3 keep the existing one-liners covering the other two pillars
   // (events, sparring) referenced by that same headline's supporting line.
   const slides = [
-    { hero: true, text: t('onboarding.welcome1'), subtext: t('onboarding.welcome1Sub') },
-    { icon: 'calendar' as const, text: t('onboarding.welcome2') },
-    { icon: 'body' as const, text: t('onboarding.welcome3') },
+    { hero: true as const, icon: undefined, text: t('onboarding.welcome1'), subtext: t('onboarding.welcome1Sub') },
+    { hero: false as const, icon: 'calendarMark' as const, text: t('onboarding.welcome2') },
+    { hero: false as const, icon: 'clinch' as const, text: t('onboarding.welcome3') },
   ]
   const isLast = page === slides.length - 1
 
@@ -68,7 +67,7 @@ export default function WelcomeScreen() {
               <Icon name="hero" size={120} color={TEXT} />
             ) : (
               <View style={styles.iconCircle}>
-                <Ionicons name={slide.icon} size={36} color={ACCENT} />
+                <Icon name={slide.icon} size={36} color={ACCENT} />
               </View>
             )}
             <Text style={styles.slideText}>{slide.text}</Text>

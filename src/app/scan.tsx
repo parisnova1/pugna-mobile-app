@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { View, Text, TextInput, Pressable, StyleSheet } from 'react-native'
 import { CameraView, useCameraPermissions } from 'expo-camera'
 import { router } from 'expo-router'
-import { Ionicons } from '@expo/vector-icons'
+import { Icon } from '@/components/icons/Icon'
 import { apiFetch } from '@/lib/api'
 import { extractEventIdentifier } from '@/lib/parsePugnaUrl'
 import { useLanguage } from '@/i18n/LanguageContext'
@@ -33,15 +33,12 @@ export default function ScanScreen() {
     if (manualValue.trim()) handleDecode(manualValue.trim())
   }
 
-  // The camera view is a live video feed (always dark) — the close button sitting
-  // on top of it needs a light icon there, but a dark one against the app's normal
-  // light background in the permission/error states.
   const showingCamera = Boolean(permission?.granted) && !scanError
 
   return (
     <View style={[styles.flex, !showingCamera && { backgroundColor: BG }]}>
       <Pressable onPress={() => router.back()} style={styles.close} hitSlop={12}>
-        <Ionicons name="close" size={24} color={showingCamera ? '#fff' : TEXT} />
+        <Icon name="close" size={24} color={TEXT} />
       </Pressable>
 
       {!permission ? null : !permission.granted ? (

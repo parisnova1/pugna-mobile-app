@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Text, Pressable, Modal, StyleSheet } from 'react-native'
 import { Calendar, type DateData } from 'react-native-calendars'
-import { Ionicons } from '@expo/vector-icons'
+import { Icon } from './icons/Icon'
 import { formatDisplayDate } from '@/lib/date'
 import { ACCENT, ON_ACCENT, CARD, BORDER, MUTED, TEXT, INPUT_BG, FONT_DISPLAY_BOLD, FONT_BODY } from '@/theme'
 
@@ -28,7 +28,7 @@ export default function DatePickerField({
     <>
       <Pressable style={styles.input} onPress={() => setOpen(true)}>
         <Text style={value ? styles.valueText : styles.placeholderText}>{value ? formatDisplayDate(value) : placeholder}</Text>
-        <Ionicons name="calendar-outline" size={18} color={MUTED} />
+        <Icon name="calendarMark" size={18} color={MUTED} />
       </Pressable>
 
       <Modal transparent animationType="fade" visible={open} onRequestClose={() => setOpen(false)}>

@@ -1,5 +1,5 @@
 import { Tabs, Redirect } from 'expo-router'
-import { Ionicons } from '@expo/vector-icons'
+import { Icon } from '@/components/icons/Icon'
 import { useAuth } from '@/auth/AuthContext'
 import { useLanguage } from '@/i18n/LanguageContext'
 import { ACCENT, MUTED, BG, BORDER, FONT_DISPLAY_BOLD } from '@/theme'
@@ -26,15 +26,15 @@ export default function OrganizerTabsLayout() {
     >
       <Tabs.Screen
         name="index"
-        options={{ title: t('organizer.tab.overview'), tabBarIcon: ({ color, size }) => <Ionicons name="stats-chart" size={size} color={color} /> }}
+        options={{ title: t('organizer.tab.overview'), tabBarIcon: ({ color, size }) => <Icon name="statsChart" size={size} color={String(color)} /> }}
       />
       <Tabs.Screen
         name="events"
-        options={{ title: t('organizer.tab.events'), tabBarIcon: ({ color, size }) => <Ionicons name="calendar" size={size} color={color} /> }}
+        options={{ title: t('organizer.tab.events'), tabBarIcon: ({ color, size }) => <Icon name="calendarMark" size={size} color={String(color)} /> }}
       />
       <Tabs.Screen
         name="account"
-        options={{ title: t('organizer.tab.account'), tabBarIcon: ({ color, size }) => <Ionicons name="person-circle" size={size} color={color} /> }}
+        options={{ title: t('organizer.tab.account'), tabBarIcon: ({ color, size }) => <Icon name="personCircle" size={size} color={String(color)} /> }}
       />
     </Tabs>
   )

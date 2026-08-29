@@ -15,8 +15,10 @@ export function useAppFonts() {
     Geist_700Bold,
     Geist_900Black,
     GeistMono_400Regular,
-    // Every icon in the app is <Ionicons/>. Its glyphs render via a web font
-    // that @expo/vector-icons otherwise registers lazily per-icon-instance
+    // The app's own icon set (components/icons/Icon.tsx) is plain SVG, but
+    // GoogleSignInButton's official Google "G" glyph still comes from
+    // <Ionicons name="logo-google"/>. That glyph renders via a web font that
+    // @expo/vector-icons otherwise registers lazily per-icon-instance
     // (Font.loadAsync in Icon's own componentDidMount). On static export,
     // that per-instance load lands after the page's HTML snapshot is taken,
     // so the exported HTML always has the icon unloaded (empty glyph) while

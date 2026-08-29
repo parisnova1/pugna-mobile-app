@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { View, Text, ScrollView, Pressable, StyleSheet, Share, Linking, Alert, Modal, TextInput } from 'react-native'
 import { useLocalSearchParams, router } from 'expo-router'
 import * as Calendar from 'expo-calendar'
-import { Ionicons } from '@expo/vector-icons'
+import { Icon, type IconName } from '@/components/icons/Icon'
 import { apiFetch } from '@/lib/api'
 import { formatDisplayDate } from '@/lib/date'
 import { subscribeToEvent } from '@/lib/ws'
@@ -15,7 +15,7 @@ import Button from '@/components/Button'
 import BracketView, { type Bout } from '@/components/Bracket'
 import DaySwitcher, { type EventDay } from '@/components/DaySwitcher'
 import ErrorBoundary from '@/components/ErrorBoundary'
-import { ACCENT, ON_ACCENT, TEXT, CARD, BORDER, MUTED, BG, INPUT_BG, FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_BODY } from '@/theme'
+import { ACCENT, ON_ACCENT, TEXT, CARD, BORDER, MUTED, BG, INPUT_BG, LIVE_RED, FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_BODY } from '@/theme'
 
 type EventInfo = {
   id: number; name: string; date: string; location: string; venue: string; discipline: string; status: string
@@ -186,18 +186,18 @@ function EventDetailScreenInner() {
 
           <View style={styles.actionRow}>
             {user?.role === 'viewer' && (
-              <ActionButton icon={saved ? 'bookmark' : 'bookmark-outline'} label={saved ? t('eventDetail.saved') : t('eventDetail.save')} active={saved} disabled={saveBusy} onPress={toggleSave} />
+              <ActionButton icon="bookmark" filled={saved} label={saved ? t('eventDetail.saved') : t('eventDetail.save')} active={saved} disabled={saveBusy} onPress={toggleSave} />
             )}
-            <ActionButton icon="share-outline" label={t('eventDetail.share')} onPress={handleShare} />
-            <ActionButton icon="calendar-outline" label={t('eventDetail.addToCalendar')} onPress={handleAddToCalendar} />
+            <ActionButton icon="share" label={t('eventDetail.share')} onPress={handleShare} />
+            <ActionButton icon="calendarMark" label={t('eventDetail.addToCalendar')} onPress={handleAddToCalendar} />
             {!!event.livestream_url && (
-              <ActionButton icon="radio-outline" label={t('eventDetail.watchLive')} onPress={() => Linking.openURL(event.livestream_url)} />
+              <ActionButton icon="broadcast" label={t('eventDetail.watchLive')} onPress={() => Linking.openURL(event.livestream_url)} />
             )}
             {user?.role === 'club' && event.status === 'Open' && event.format === 'bracket' && (
-              <ActionButton icon="person-add-outline" label={t('eventDetail.nominate')} onPress={() => setNominating(true)} />
+              <ActionButton icon="personAdd" label={t('eventDetail.nominate')} onPress={() => setNominating(true)} />
             )}
             {!!user && (
-              <ActionButton icon={muted ? 'notifications-off-outline' : 'notifications-outline'} label={muted ? t('eventDetail.unmute') : t('eventDetail.mute')} disabled={muteBusy} onPress={toggleMute} />
+              <ActionButton icon={muted ? 'bellOff' : 'bell'} label={muted ? t('eventDetail.unmute') : t('eventDetail.mute')} disabled={muteBusy} onPress={toggleMute} />
             )}
           </View>
 
@@ -241,10 +241,10 @@ function EventDetailScreenInner() {
   )
 }
 
-function ActionButton({ icon, label, active, disabled, onPress }: { icon: keyof typeof Ionicons.glyphMap; label: string; active?: boolean; disabled?: boolean; onPress: () => void }) {
+function ActionButton({ icon, label, active, filled, disabled, onPress }: { icon: IconName; label: string; active?: boolean; filled?: boolean; disabled?: boolean; onPress: () => void }) {
   return (
     <Pressable onPress={onPress} disabled={disabled} style={[styles.actionButton, active && styles.actionButtonActive, disabled && { opacity: 0.6 }]}>
-      <Ionicons name={icon} size={14} color={active ? ON_ACCENT : TEXT} />
+      <Icon name={icon} size={14} color={active ? ON_ACCENT : TEXT} filled={filled} />
       <Text style={[styles.actionLabel, active && { color: ON_ACCENT }]}>{label}</Text>
     </Pressable>
   )
@@ -535,9 +535,9 @@ const styles = StyleSheet.create({
   actionButton: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: CARD, borderWidth: 1, borderColor: BORDER, borderRadius: 9999, paddingVertical: 8, paddingHorizontal: 14 },
   actionButtonActive: { backgroundColor: ACCENT, borderColor: ACCENT },
   actionLabel: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 11, letterSpacing: 0.6, color: TEXT, textTransform: 'uppercase' },
-  liveCard: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: CARD, borderWidth: 1, borderColor: ACCENT, borderRadius: 4, padding: 14, marginTop: 16 },
-  liveDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: ACCENT },
-  liveLabel: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 11, letterSpacing: 1, color: ACCENT, textTransform: 'uppercase' },
+  liveCard: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: CARD, borderWidth: 1, borderColor: LIVE_RED, borderRadius: 4, padding: 14, marginTop: 16 },
+  liveDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: LIVE_RED },
+  liveLabel: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 11, letterSpacing: 1, color: LIVE_RED, textTransform: 'uppercase' },
   liveFighters: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 13, color: TEXT, textTransform: 'uppercase', flex: 1, textAlign: 'right' },
   liveVs: { color: MUTED },
   tabBar: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: BORDER, backgroundColor: BG, paddingHorizontal: 12 },

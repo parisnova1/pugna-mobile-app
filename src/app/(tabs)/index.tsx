@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
-import { Ionicons } from '@expo/vector-icons'
+import { Icon, type IconName } from '@/components/icons/Icon'
 import { apiFetch } from '@/lib/api'
 import { formatDisplayDate } from '@/lib/date'
 import { useLanguage } from '@/i18n/LanguageContext'
@@ -56,7 +56,7 @@ function DiscoverScreenInner() {
           <View style={styles.heroTopRow}>
             <Text style={styles.eyebrow}>{t('hero.eyebrow')}</Text>
             <Pressable onPress={() => router.push('/search')} hitSlop={10}>
-              <Ionicons name="search" size={20} color={MUTED} />
+              <Icon name="search" size={20} color={MUTED} />
             </Pressable>
           </View>
           <Text style={styles.heroTitle}>
@@ -68,18 +68,18 @@ function DiscoverScreenInner() {
         </View>
 
         <View style={styles.quickRow}>
-          <QuickCard icon="calendar" label={t('nav.events')} onPress={() => router.push('/(tabs)/events')} />
+          <QuickCard icon="calendarMark" label={t('nav.events')} onPress={() => router.push('/(tabs)/events')} />
           <QuickCard icon="shield" label={t('nav.clubs')} onPress={() => router.push('/(tabs)/clubs')} />
-          <QuickCard icon="body" label={t('nav.sparring')} onPress={() => router.push('/(tabs)/sparring')} />
+          <QuickCard icon="clinch" label={t('nav.sparring')} onPress={() => router.push('/(tabs)/sparring')} />
         </View>
 
         <Pressable style={styles.scanCard} onPress={() => router.push('/scan')}>
-          <Ionicons name="qr-code" size={22} color={ACCENT} />
+          <Icon name="scan" size={22} color={ACCENT} />
           <View style={{ flex: 1 }}>
             <Text style={styles.scanTitle}>{t('viewerHome.scanTitle')}</Text>
             <Text style={styles.scanSub}>{t('viewerHome.scanPointCamera')}</Text>
           </View>
-          <Ionicons name="chevron-forward" size={18} color={MUTED} />
+          <Icon name="chevronForward" size={18} color={MUTED} />
         </Pressable>
 
         <Text style={styles.sectionLabel}>{t('viewerHome.upcomingNearYou')}</Text>
@@ -99,7 +99,7 @@ function DiscoverScreenInner() {
                 <Text style={styles.eventTitle}>{ev.name}</Text>
                 <Text style={styles.eventMeta}>{formatDisplayDate(ev.date)} · {ev.location}</Text>
               </View>
-              <Ionicons name="chevron-forward" size={18} color={MUTED} />
+              <Icon name="chevronForward" size={18} color={MUTED} />
             </Pressable>
           ))
         )}
@@ -111,7 +111,7 @@ function DiscoverScreenInner() {
         {!user && (
           <Pressable style={styles.joinCard} onPress={() => router.push('/(auth)/signup')}>
             <Text style={styles.joinTitle}>{t('header.joinPugna')}</Text>
-            <Ionicons name="arrow-forward" size={18} color={ON_ACCENT} />
+            <Icon name="arrowForward" size={18} color={ON_ACCENT} />
           </Pressable>
         )}
       </ScrollView>
@@ -119,10 +119,10 @@ function DiscoverScreenInner() {
   )
 }
 
-function QuickCard({ icon, label, onPress }: { icon: keyof typeof Ionicons.glyphMap; label: string; onPress: () => void }) {
+function QuickCard({ icon, label, onPress }: { icon: IconName; label: string; onPress: () => void }) {
   return (
     <Pressable style={styles.quickCard} onPress={onPress}>
-      <Ionicons name={icon} size={20} color={ACCENT} />
+      <Icon name={icon} size={20} color={ACCENT} />
       <Text style={styles.quickLabel}>{label}</Text>
     </Pressable>
   )

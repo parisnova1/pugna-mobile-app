@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
-import { Ionicons } from '@expo/vector-icons'
+import { Icon } from '@/components/icons/Icon'
 import { apiFetch } from '@/lib/api'
 import { useAuth } from '@/auth/AuthContext'
 import { useLanguage } from '@/i18n/LanguageContext'
@@ -63,7 +63,7 @@ function YouScreenInner() {
             <Text style={styles.email}>{user.email}</Text>
           </View>
           <Pressable onPress={() => logout()} hitSlop={10}>
-            <Ionicons name="log-out-outline" size={22} color={MUTED} />
+            <Icon name="logout" size={22} color={MUTED} />
           </Pressable>
         </View>
 

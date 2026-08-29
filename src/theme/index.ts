@@ -11,22 +11,22 @@
 // LIVE_RED / CAUTION_AMBER / POSITIVE_GREEN, used only where they signal a
 // status (a live bout, an injury pull-out, an accepted nomination).
 export const BG = '#000000'
-export const CARD = 'rgba(255,255,255,0.06)'
+export const CARD = '#111114'
 export const BORDER = 'rgba(255,255,255,0.14)'
 export const MUTED = '#9a9a9a'
 export const TEXT = '#ffffff'
 export const ACCENT = '#ffffff'
 export const ON_ACCENT = '#000000'
-export const INPUT_BG = 'rgba(255,255,255,0.06)'
+export const INPUT_BG = '#111114'
 
 // Glass surface tokens, for the small set of high-visibility surfaces that
 // get a real blur treatment (primary buttons, drawer active row, tab bar,
 // modal sheets) rather than the flat CARD/BORDER treatment ordinary list
 // rows use — see components/glass/GlassSurface.tsx.
-export const SURFACE = 'rgba(255,255,255,0.06)'
-export const SURFACE_STRONG = 'rgba(255,255,255,0.14)'
-export const SURFACE_BORDER = 'rgba(255,255,255,0.14)'
-export const SPECULAR = 'rgba(255,255,255,0.35)'
+export const SURFACE = '#111114'
+export const SURFACE_STRONG = 'rgba(255,255,255,0.22)'
+export const SURFACE_BORDER = 'rgba(255,255,255,0.16)'
+export const SPECULAR = 'rgba(255,255,255,0.55)'
 export const BLUR_INTENSITY = 40
 export const MODAL_SCRIM = 'rgba(0,0,0,0.6)'
 

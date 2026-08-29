@@ -1,6 +1,6 @@
 import { Pressable, Text, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
-import { Ionicons } from '@expo/vector-icons'
+import { Icon } from '@/components/icons/Icon'
 import { useLanguage } from '@/i18n/LanguageContext'
 import { MUTED, FONT_DISPLAY_BOLD } from '@/theme'
 
@@ -13,7 +13,7 @@ export default function BackLink({ onPress }: { onPress?: () => void }) {
   const { t } = useLanguage()
   return (
     <Pressable style={styles.back} hitSlop={12} onPress={onPress ?? (() => router.back())}>
-      <Ionicons name="chevron-back" size={16} color={MUTED} />
+      <Icon name="chevronBack" size={16} color={MUTED} />
       <Text style={styles.label}>{t('common.back')}</Text>
     </Pressable>
   )

@@ -1,5 +1,5 @@
 import { Tabs, Redirect } from 'expo-router'
-import { Ionicons } from '@expo/vector-icons'
+import { Icon } from '@/components/icons/Icon'
 import { useAuth } from '@/auth/AuthContext'
 import { useOnboarding } from '@/onboarding/OnboardingContext'
 import { useLanguage } from '@/i18n/LanguageContext'
@@ -33,23 +33,23 @@ export default function TabsLayout() {
     >
       <Tabs.Screen
         name="index"
-        options={{ title: t('nav.discover'), tabBarIcon: ({ color, size }) => <Ionicons name="flash" size={size} color={color} /> }}
+        options={{ title: t('nav.discover'), tabBarIcon: ({ color, size }) => <Icon name="flash" size={size} color={String(color)} /> }}
       />
       <Tabs.Screen
         name="events"
-        options={{ title: t('nav.events'), tabBarIcon: ({ color, size }) => <Ionicons name="calendar" size={size} color={color} /> }}
+        options={{ title: t('nav.events'), tabBarIcon: ({ color, size }) => <Icon name="calendarMark" size={size} color={String(color)} /> }}
       />
       <Tabs.Screen
         name="clubs"
-        options={{ title: t('nav.clubs'), tabBarIcon: ({ color, size }) => <Ionicons name="shield" size={size} color={color} /> }}
+        options={{ title: t('nav.clubs'), tabBarIcon: ({ color, size }) => <Icon name="shield" size={size} color={String(color)} /> }}
       />
       <Tabs.Screen
         name="sparring"
-        options={{ title: t('nav.sparring'), tabBarIcon: ({ color, size }) => <Ionicons name="body" size={size} color={color} /> }}
+        options={{ title: t('nav.sparring'), tabBarIcon: ({ color, size }) => <Icon name="clinch" size={size} color={String(color)} /> }}
       />
       <Tabs.Screen
         name="you"
-        options={{ title: t('header.viewerHome'), tabBarIcon: ({ color, size }) => <Ionicons name="person-circle" size={size} color={color} /> }}
+        options={{ title: t('header.viewerHome'), tabBarIcon: ({ color, size }) => <Icon name="personCircle" size={size} color={String(color)} /> }}
       />
     </Tabs>
   )

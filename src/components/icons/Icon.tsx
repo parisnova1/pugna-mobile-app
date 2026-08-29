@@ -14,8 +14,11 @@ type IconDef = { viewBox: string; prims: Prim[] }
 export type IconName =
   | 'hero' | 'glove' | 'whistle' | 'ring' | 'eye' | 'clipboard'
   | 'kick' | 'octagon' | 'belt' | 'elbow' | 'clinch'
-  | 'broadcast' | 'bracket' | 'bell' | 'calendarMark'
+  | 'broadcast' | 'bracket' | 'bell' | 'bellOff' | 'calendarMark'
   | 'followPerson' | 'followClub' | 'scan' | 'calendarCheck' | 'settings'
+  | 'close' | 'chevronBack' | 'chevronForward' | 'arrowForward' | 'search'
+  | 'flash' | 'shield' | 'personCircle' | 'statsChart' | 'logout'
+  | 'bookmark' | 'share' | 'personAdd'
 
 // Data-driven monochrome icon set (48x48, hero mark 160x160) — one shared
 // component instead of 19 near-identical SVG files, matching this redesign's
@@ -216,6 +219,96 @@ const ICONS: Record<IconName, IconDef> = {
       { t: 'line', x1: 15.5, y1: 32.5, x2: 10, y2: 38 },
     ],
   },
+  bellOff: {
+    viewBox: '0 0 48 48',
+    prims: [
+      { t: 'path', d: 'M14 28 L14 18 Q14 9 24 9 Q34 9 34 18 L34 28' },
+      { t: 'line', x1: 10, y1: 28, x2: 38, y2: 28 },
+      { t: 'circle', cx: 24, cy: 5, r: 2, fill: true },
+      { t: 'path', d: 'M20 32 Q24 37 28 32' },
+      { t: 'line', x1: 8, y1: 8, x2: 40, y2: 40 },
+    ],
+  },
+  // Generic UI chrome icons — same thin-line 48x48 geometric style as the
+  // combat-sport set above, added to replace the mismatched filled/rounded
+  // Ionicons this app previously borrowed for nav chrome, actions, and tab
+  // bars (see the boxing-sprint plan's Slice 10 mobile Liquid Glass rollout).
+  close: {
+    viewBox: '0 0 48 48',
+    prims: [
+      { t: 'line', x1: 12, y1: 12, x2: 36, y2: 36 },
+      { t: 'line', x1: 36, y1: 12, x2: 12, y2: 36 },
+    ],
+  },
+  chevronBack: { viewBox: '0 0 48 48', prims: [{ t: 'path', d: 'M28 10 L16 24 L28 38' }] },
+  chevronForward: { viewBox: '0 0 48 48', prims: [{ t: 'path', d: 'M20 10 L32 24 L20 38' }] },
+  arrowForward: {
+    viewBox: '0 0 48 48',
+    prims: [
+      { t: 'line', x1: 8, y1: 24, x2: 38, y2: 24 },
+      { t: 'path', d: 'M27 13 L38 24 L27 35' },
+    ],
+  },
+  search: {
+    viewBox: '0 0 48 48',
+    prims: [
+      { t: 'circle', cx: 21, cy: 21, r: 12 },
+      { t: 'line', x1: 30, y1: 30, x2: 41, y2: 41 },
+    ],
+  },
+  flash: {
+    viewBox: '0 0 48 48',
+    prims: [{ t: 'polygon', points: '26,4 12,26 22,26 18,44 38,18 26,18' }],
+  },
+  shield: {
+    viewBox: '0 0 48 48',
+    prims: [{ t: 'path', d: 'M24 4 L40 10 L40 21 Q40 36 24 44 Q8 36 8 21 L8 10 Z' }],
+  },
+  personCircle: {
+    viewBox: '0 0 48 48',
+    prims: [
+      { t: 'circle', cx: 24, cy: 24, r: 18 },
+      { t: 'circle', cx: 24, cy: 19, r: 6 },
+      { t: 'path', d: 'M13 37 Q13 28 24 28 Q35 28 35 37' },
+    ],
+  },
+  statsChart: {
+    viewBox: '0 0 48 48',
+    prims: [
+      { t: 'rect', x: 7, y: 24, w: 8, h: 16, rx: 2, fill: true },
+      { t: 'rect', x: 20, y: 12, w: 8, h: 28, rx: 2, fill: true },
+      { t: 'rect', x: 33, y: 30, w: 8, h: 10, rx: 2, fill: true },
+    ],
+  },
+  logout: {
+    viewBox: '0 0 48 48',
+    prims: [
+      { t: 'rect', x: 8, y: 8, w: 18, h: 32, rx: 3 },
+      { t: 'line', x1: 20, y1: 24, x2: 41, y2: 24 },
+      { t: 'path', d: 'M32 15 L41 24 L32 33' },
+    ],
+  },
+  bookmark: {
+    viewBox: '0 0 48 48',
+    prims: [{ t: 'path', d: 'M14 6 H34 V42 L24 33 L14 42 Z' }],
+  },
+  share: {
+    viewBox: '0 0 48 48',
+    prims: [
+      { t: 'line', x1: 24, y1: 6, x2: 24, y2: 28 },
+      { t: 'path', d: 'M16 14 L24 6 L32 14' },
+      { t: 'path', d: 'M10 22 V38 Q10 40 12 40 H36 Q38 40 38 38 V22' },
+    ],
+  },
+  personAdd: {
+    viewBox: '0 0 48 48',
+    prims: [
+      { t: 'circle', cx: 18, cy: 16, r: 8 },
+      { t: 'path', d: 'M4 40 Q4 27 18 27 Q26 27 29 33' },
+      { t: 'line', x1: 37, y1: 22, x2: 37, y2: 34 },
+      { t: 'line', x1: 31, y1: 28, x2: 43, y2: 28 },
+    ],
+  },
 }
 
 export function Icon({
@@ -223,17 +316,23 @@ export function Icon({
   size = 24,
   color = TEXT,
   strokeWidth = 2.6,
+  filled,
 }: {
   name: IconName
   size?: number
   color?: string
   strokeWidth?: number
+  // Renders every primitive solid instead of outlined — for icons with a
+  // meaningful on/off state (a saved bookmark, an active toggle) rather than
+  // drawing a second icon definition for the filled variant.
+  filled?: boolean
 }) {
   const def = ICONS[name]
   return (
     <Svg width={size} height={size} viewBox={def.viewBox} fill="none">
       {def.prims.map((p, i) => {
-        const fillProps = 'fill' in p && p.fill ? { fill: color, stroke: 'none' } : { stroke: color, strokeWidth }
+        const fillProps =
+          filled || ('fill' in p && p.fill) ? { fill: color, stroke: 'none' } : { stroke: color, strokeWidth }
         const common = { strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const, ...fillProps }
         switch (p.t) {
           case 'rect':
