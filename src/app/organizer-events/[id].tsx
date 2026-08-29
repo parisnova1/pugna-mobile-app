@@ -10,6 +10,7 @@ import BackButton from '@/components/BackButton'
 import Button from '@/components/Button'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import BracketView, { type Bout } from '@/components/Bracket'
+import DaySwitcher, { type EventDay } from '@/components/DaySwitcher'
 import { ACCENT, ON_ACCENT, TEXT, CARD, BORDER, MUTED, INPUT_BG, FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_BODY } from '@/theme'
 
 type EventInfo = {
@@ -87,7 +88,7 @@ function ManageEventInner() {
           {tab === 'weightClasses' && <WeightClassesTab eventId={String(id)} discipline={event.discipline} weightClasses={weightClasses} onChanged={load} />}
           {tab === 'nominations' && <NominationsTab eventId={String(id)} onChanged={load} />}
           {tab === 'fighters' && <FightersTab eventId={String(id)} fighters={fighters} weightClasses={weightClasses} onChanged={load} />}
-          {tab === 'bracket' && <BracketTab eventId={String(id)} currentBoutId={event.current_bout_id ?? null} weightClasses={weightClasses} fighters={fighters} onChanged={load} />}
+          {tab === 'bracket' && <BracketTab eventId={String(id)} currentBoutId={event.current_bout_id ?? null} numberOfDays={event.numberOfDays ?? event.number_of_days ?? 1} weightClasses={weightClasses} fighters={fighters} onChanged={load} />}
           {tab === 'fightCard' && <FightCardTab eventId={String(id)} />}
         </View>
       </ScrollView>
@@ -603,7 +604,7 @@ function AssignWeightClassModal({ fighter, eventId, weightClasses, onCancel, onS
 
 // ─── Bracket ────────────────────────────────────────────────────────────────
 
-function BracketTab({ eventId, currentBoutId, weightClasses, fighters, onChanged }: { eventId: string; currentBoutId: number | null; weightClasses: WeightClass[]; fighters: EventFighter[]; onChanged: () => void }) {
+function BracketTab({ eventId, currentBoutId, numberOfDays, weightClasses, fighters, onChanged }: { eventId: string; currentBoutId: number | null; numberOfDays: number; weightClasses: WeightClass[]; fighters: EventFighter[]; onChanged: () => void }) {
   const { t } = useLanguage()
   const [selected, setSelected] = useState<number | null>(weightClasses[0]?.id ?? null)
   const [bouts, setBouts] = useState<Bout[]>([])
@@ -611,6 +612,9 @@ function BracketTab({ eventId, currentBoutId, weightClasses, fighters, onChanged
   const [generating, setGenerating] = useState(false)
   const [liveBusy, setLiveBusy] = useState(false)
   const [resultTarget, setResultTarget] = useState<Bout | null>(null)
+  const [days, setDays] = useState<EventDay[]>([])
+  const [selectedDay, setSelectedDay] = useState<number | null>(null)
+  const [daysBusy, setDaysBusy] = useState(false)
 
   const setLive = async (boutId: number | null) => {
     setLiveBusy(true)
@@ -619,6 +623,19 @@ function BracketTab({ eventId, currentBoutId, weightClasses, fighters, onChanged
 
   const fightersById = Object.fromEntries(fighters.map(f => [f.id, { name: f.name, club: f.club }]))
   const selectedWc = weightClasses.find(w => w.id === selected) ?? null
+
+  const loadDays = useCallback(() => {
+    apiFetch<{ days: EventDay[] }>(`/api/events/${eventId}/days`)
+      .then(r => { setDays(r.days); setSelectedDay(prev => prev ?? r.days[0]?.id ?? null) })
+      .catch(() => setDays([]))
+  }, [eventId])
+
+  useEffect(() => { if (numberOfDays > 1) loadDays() }, [numberOfDays, loadDays])
+
+  const generateDays = async () => {
+    setDaysBusy(true)
+    try { await apiFetch(`/api/events/${eventId}/days`, { method: 'POST' }); loadDays() } catch { /* ignore */ } finally { setDaysBusy(false) }
+  }
 
   const loadBracket = useCallback((weightClassId: number) => {
     setLoading(true)
@@ -637,7 +654,7 @@ function BracketTab({ eventId, currentBoutId, weightClasses, fighters, onChanged
     if (!selected) return
     setGenerating(true)
     try {
-      await apiFetch(`/api/weight-classes/${selected}/bracket`, { method: 'POST' })
+      await apiFetch(`/api/weight-classes/${selected}/bracket`, { method: 'POST', body: JSON.stringify({ dayId: selectedDay }) })
       loadBracket(selected)
       onChanged()
     } catch {
@@ -651,6 +668,17 @@ function BracketTab({ eventId, currentBoutId, weightClasses, fighters, onChanged
 
   return (
     <View>
+      {numberOfDays > 1 && (
+        <View style={{ marginBottom: 16 }}>
+          <Text style={styles.label}>{t('organizer.days.title')}</Text>
+          {days.length === 0 ? (
+            <Button label={daysBusy ? t('login.pleaseWait') : t('organizer.days.generate')} variant="outline" onPress={generateDays} disabled={daysBusy} style={{ alignSelf: 'flex-start', paddingVertical: 10 }} />
+          ) : (
+            <DaySwitcher days={days} selectedId={selectedDay} onSelect={setSelectedDay} />
+          )}
+        </View>
+      )}
+
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, marginBottom: 16 }}>
         {weightClasses.map(wc => (
           <Pressable key={wc.id} onPress={() => setSelected(wc.id)} style={[styles.pill, selected === wc.id && styles.pillActive]}>

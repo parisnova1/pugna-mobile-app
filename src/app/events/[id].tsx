@@ -13,6 +13,7 @@ import Spinner from '@/components/Spinner'
 import BackButton from '@/components/BackButton'
 import Button from '@/components/Button'
 import BracketView, { type Bout } from '@/components/Bracket'
+import DaySwitcher, { type EventDay } from '@/components/DaySwitcher'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import { ACCENT, ON_ACCENT, TEXT, CARD, BORDER, MUTED, BG, INPUT_BG, FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_BODY } from '@/theme'
 
@@ -227,7 +228,7 @@ function EventDetailScreenInner() {
           {tab === 'fightcard' && (
             event.format === 'card'
               ? <CardFightCardTab eventId={String(id)} />
-              : <FightCardTab weightClasses={weightClasses} fighters={fighters} qrToken={event.qr_token} />
+              : <FightCardTab eventId={String(id)} weightClasses={weightClasses} fighters={fighters} qrToken={event.qr_token} />
           )}
           {tab === 'fighters' && <FightersTab fighters={fighters} />}
         </View>
@@ -285,11 +286,13 @@ function OverviewTab({ event, weightClasses }: { event: EventInfo; weightClasses
   )
 }
 
-function FightCardTab({ weightClasses, fighters, qrToken }: { weightClasses: WeightClass[]; fighters: EventFighter[]; qrToken: string }) {
+function FightCardTab({ eventId, weightClasses, fighters, qrToken }: { eventId: string; weightClasses: WeightClass[]; fighters: EventFighter[]; qrToken: string }) {
   const { t } = useLanguage()
   const [selected, setSelected] = useState<number | null>(weightClasses[0]?.id ?? null)
   const [bouts, setBouts] = useState<Bout[]>([])
   const [loading, setLoading] = useState(false)
+  const [days, setDays] = useState<EventDay[]>([])
+  const [selectedDay, setSelectedDay] = useState<number | null>(null)
 
   const fightersById = Object.fromEntries(fighters.map(f => [f.id, { name: f.name, club: f.club }]))
 
@@ -307,6 +310,12 @@ function FightCardTab({ weightClasses, fighters, qrToken }: { weightClasses: Wei
   }, [selected, loadBouts])
 
   useEffect(() => {
+    apiFetch<{ days: EventDay[] }>(`/api/public/events/${eventId}/days`)
+      .then(r => { setDays(r.days); setSelectedDay(r.days.find(d => d.status === 'live')?.id ?? r.days[0]?.id ?? null) })
+      .catch(() => setDays([]))
+  }, [eventId])
+
+  useEffect(() => {
     if (!qrToken) return
     const unsubscribe = subscribeToEvent(qrToken, msg => {
       if (msg.type === 'bracket:update' && msg.weightClassId === selected) {
@@ -320,8 +329,16 @@ function FightCardTab({ weightClasses, fighters, qrToken }: { weightClasses: Wei
     return <Text style={styles.emptyBox}>{t('eventDetail.noFightCard')}</Text>
   }
 
+  const visibleBouts = selectedDay ? bouts.filter(b => b.event_day_id === selectedDay) : bouts
+
   return (
     <View>
+      {days.length > 0 && (
+        <View style={{ marginBottom: 12 }}>
+          <DaySwitcher days={days} selectedId={selectedDay} onSelect={setSelectedDay} />
+        </View>
+      )}
+
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pillRow}>
         {weightClasses.map(wc => (
           <Pressable key={wc.id} onPress={() => setSelected(wc.id)} style={[styles.pill, selected === wc.id && styles.pillActive]}>
@@ -330,7 +347,7 @@ function FightCardTab({ weightClasses, fighters, qrToken }: { weightClasses: Wei
         ))}
       </ScrollView>
 
-      {loading ? <Spinner /> : <BracketView bouts={bouts} fighters={fightersById} />}
+      {loading ? <Spinner /> : <BracketView bouts={visibleBouts} fighters={fightersById} />}
     </View>
   )
 }
