@@ -7,27 +7,56 @@ import { useOnboarding } from '@/onboarding/OnboardingContext'
 import { useLanguage } from '@/i18n/LanguageContext'
 import { apiFetch } from '@/lib/api'
 import Button from '@/components/Button'
+import CenteredColumn from '@/components/CenteredColumn'
 import GoogleSignInButton from '@/components/GoogleSignInButton'
 import OrDivider from '@/components/OrDivider'
 import { roleHomePath } from '@/lib/roleHome'
-import { ACCENT, ON_ACCENT, TEXT, BORDER, MUTED, BG, INPUT_BG, FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_BODY } from '@/theme'
+import { ACCENT, TEXT, BORDER, MUTED, BG, INPUT_BG, FONT_DISPLAY_BOLD, FONT_BODY } from '@/theme'
 
 const ROLES: Role[] = ['viewer', 'club', 'organizer']
+
+// Applies whatever was picked pre-account (Follow's local selections, the
+// Permissions primer's notification intent) via the real APIs now that a
+// session finally exists, then clears them — best-effort, a failure here
+// shouldn't block landing on the new account's home screen.
+async function applyPendingOnboardingState(
+  pendingFollows: { fighterIds: number[]; clubIds: number[]; eventIds: number[] },
+  wantsNotifications: boolean | null,
+) {
+  const follows = [
+    ...pendingFollows.fighterIds.map(id => apiFetch(`/api/public/fighters/${id}/follow`, { method: 'POST' })),
+    ...pendingFollows.clubIds.map(id => apiFetch(`/api/clubs/${id}/follow`, { method: 'POST' })),
+    ...pendingFollows.eventIds.map(id => apiFetch(`/api/public/events/${id}/save`, { method: 'POST' })),
+  ]
+  await Promise.allSettled(follows)
+
+  if (wantsNotifications !== null) {
+    const categories = Object.fromEntries(
+      ['event.live', 'bout.result', 'event.stream', 'nomination.accepted', 'nomination.injured'].map(k => [k, wantsNotifications]),
+    )
+    await apiFetch('/api/notifications/settings', { method: 'PATCH', body: JSON.stringify({ categories }) }).catch(() => {})
+  }
+}
 
 export default function SignupScreen() {
   const { signup } = useAuth()
   const { t } = useLanguage()
-  const { disciplines, homeLocation: onboardingLocation, homeLat, homeLng } = useOnboarding()
+  const {
+    role: onboardingRole, disciplines, homeLocation: onboardingLocation, homeLat, homeLng,
+    pendingFollows, wantsNotifications, setPendingFollows, finishOnboarding,
+  } = useOnboarding()
   const params = useLocalSearchParams<{ role?: string; name?: string }>()
-  const initialRole: Role = ROLES.includes(params.role as Role) ? (params.role as Role) : 'viewer'
+  // Persona (onboarding/role.tsx) is the source of truth now that it sets
+  // role for all three personas — the route param stays as a fallback for
+  // any stray direct link.
+  const role: Role = ROLES.includes(onboardingRole as Role)
+    ? (onboardingRole as Role)
+    : ROLES.includes(params.role as Role) ? (params.role as Role) : 'viewer'
 
-  const [role, setRole] = useState<Role>(initialRole)
   const [name, setName] = useState(params.name ?? '')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  // Prefilled from onboarding's club-info.tsx when that's how we got here —
-  // stays editable either way, same as every other field on this screen.
-  const [homeLocation, setHomeLocation] = useState(initialRole === 'club' ? onboardingLocation : '')
+  const [homeLocation, setHomeLocation] = useState(onboardingLocation)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -42,14 +71,17 @@ export default function SignupScreen() {
       const newUser = await signup(name, email, password, role, homeLocation)
       // clubs.location/clubs.disciplines aren't part of the signup endpoint
       // (only users.home_location is) — this is the one follow-up call that
-      // applies whatever onboarding's club-info.tsx already collected to the
-      // real club profile the signup endpoint auto-creates for role 'club'.
+      // applies whatever onboarding already collected to the real club
+      // profile the signup endpoint auto-creates for role 'club'.
       if (newUser.role === 'club' && (disciplines.length > 0 || homeLat != null)) {
         await apiFetch('/api/clubs/me', {
           method: 'PATCH',
           body: JSON.stringify({ disciplines, location: homeLocation, lat: homeLat, lng: homeLng }),
         }).catch(() => {})
       }
+      await applyPendingOnboardingState(pendingFollows, wantsNotifications)
+      setPendingFollows({ fighterIds: [], clubIds: [], eventIds: [] })
+      await finishOnboarding()
       router.replace(roleHomePath(newUser.role))
     } catch (err) {
       setError(err instanceof Error ? err.message : t('login.errorGeneric'))
@@ -61,91 +93,103 @@ export default function SignupScreen() {
   return (
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-        <Pressable onPress={() => router.back()} style={styles.close} hitSlop={12}>
-          <Icon name="close" size={22} color={MUTED} />
-        </Pressable>
+        <CenteredColumn>
+          <Pressable onPress={() => router.back()} style={styles.close} hitSlop={12}>
+            <Icon name="close" size={22} color={MUTED} />
+          </Pressable>
 
-        <Text style={styles.eyebrow}>{t('login.joinPugna')}</Text>
-        <Text style={styles.title}>{t('login.createAccount')}</Text>
+          <Text style={styles.eyebrow}>{t('login.joinPugna')}</Text>
+          <View style={styles.titleRow}>
+            <Text style={styles.title}>{t('login.createAccount')}</Text>
+            <View style={styles.roleChip}>
+              <Text style={styles.roleChipText}>{t(`role.${role}`)}</Text>
+            </View>
+          </View>
 
-        <View style={styles.roleRow}>
-          {ROLES.map(r => (
-            <Pressable key={r} onPress={() => setRole(r)} style={[styles.rolePill, role === r && styles.rolePillActive]}>
-              <Text style={[styles.roleLabel, role === r && styles.roleLabelActive]}>{t(`role.${r}`)}</Text>
-            </Pressable>
-          ))}
-        </View>
-
-        <GoogleSignInButton
-          role={role}
-          homeLocation={homeLocation}
-          onSuccess={newUser => router.replace(roleHomePath(newUser.role))}
-          onError={setError}
-        />
-        <OrDivider />
-
-        <View style={styles.field}>
-          <Text style={styles.label}>{role === 'club' ? t('login.clubName') : t('login.name')}</Text>
-          <TextInput
-            style={styles.input}
-            value={name}
-            onChangeText={setName}
-            placeholder={role === 'club' ? t('login.clubNamePlaceholder') : t('login.namePlaceholder')}
-            placeholderTextColor={MUTED}
-            autoComplete="name"
+          <GoogleSignInButton
+            role={role}
+            homeLocation={homeLocation}
+            uppercase={false}
+            onSuccess={newUser => {
+              applyPendingOnboardingState(pendingFollows, wantsNotifications).finally(() => {
+                setPendingFollows({ fighterIds: [], clubIds: [], eventIds: [] })
+                finishOnboarding()
+              })
+              router.replace(roleHomePath(newUser.role))
+            }}
+            onError={setError}
           />
-        </View>
+          <OrDivider />
 
-        {role === 'viewer' && (
           <View style={styles.field}>
-            <Text style={styles.label}>{t('login.homeLocation')}</Text>
+            <Text style={styles.label}>{role === 'club' ? t('login.clubName') : t('login.name')}</Text>
             <TextInput
               style={styles.input}
-              value={homeLocation}
-              onChangeText={setHomeLocation}
-              placeholder={t('login.homeLocationPlaceholder')}
+              value={name}
+              onChangeText={setName}
+              placeholder={role === 'club' ? t('login.clubNamePlaceholder') : t('login.namePlaceholder')}
               placeholderTextColor={MUTED}
+              autoComplete="name"
             />
           </View>
-        )}
 
-        <View style={styles.field}>
-          <Text style={styles.label}>{t('login.email')}</Text>
-          <TextInput
-            style={styles.input}
-            value={email}
-            onChangeText={setEmail}
-            placeholder="you@example.com"
-            placeholderTextColor={MUTED}
-            autoCapitalize="none"
-            keyboardType="email-address"
-            autoComplete="email"
+          {!onboardingLocation && (
+            <View style={styles.field}>
+              <Text style={styles.label}>{t('login.homeLocation')}</Text>
+              <TextInput
+                style={styles.input}
+                value={homeLocation}
+                onChangeText={setHomeLocation}
+                placeholder={t('login.homeLocationPlaceholder')}
+                placeholderTextColor={MUTED}
+              />
+            </View>
+          )}
+
+          <View style={styles.field}>
+            <Text style={styles.label}>{t('login.email')}</Text>
+            <TextInput
+              style={styles.input}
+              value={email}
+              onChangeText={setEmail}
+              placeholder="you@example.com"
+              placeholderTextColor={MUTED}
+              autoCapitalize="none"
+              keyboardType="email-address"
+              autoComplete="email"
+            />
+          </View>
+
+          <View style={styles.field}>
+            <Text style={styles.label}>{t('login.password')}</Text>
+            <TextInput
+              style={styles.input}
+              value={password}
+              onChangeText={setPassword}
+              placeholder="••••••••"
+              placeholderTextColor={MUTED}
+              secureTextEntry
+              autoComplete="new-password"
+            />
+          </View>
+
+          {error && <Text style={styles.error}>{error}</Text>}
+
+          <Button
+            label={loading ? t('login.pleaseWait') : t('login.createAccount')}
+            uppercase={false}
+            onPress={submit}
+            disabled={loading}
+            style={styles.submit}
           />
-        </View>
 
-        <View style={styles.field}>
-          <Text style={styles.label}>{t('login.password')}</Text>
-          <TextInput
-            style={styles.input}
-            value={password}
-            onChangeText={setPassword}
-            placeholder="••••••••"
-            placeholderTextColor={MUTED}
-            secureTextEntry
-            autoComplete="new-password"
-          />
-        </View>
-
-        {error && <Text style={styles.error}>{error}</Text>}
-
-        <Button label={loading ? t('login.pleaseWait') : t('login.createAccount')} onPress={submit} disabled={loading} style={styles.submit} />
-
-        <View style={styles.switchRow}>
-          <Text style={styles.switchText}>{t('login.hasAccount')}</Text>
-          <Pressable onPress={() => router.replace('/(auth)/login')}>
-            <Text style={styles.switchLink}>{t('login.logInLink')}</Text>
-          </Pressable>
-        </View>
+          <View style={styles.switchRow}>
+            <Text style={styles.switchText}>{t('login.hasAccount')}</Text>
+            <Pressable onPress={() => router.replace('/(auth)/login')}>
+              <Text style={styles.switchLink}>{t('login.logInLink')}</Text>
+            </Pressable>
+          </View>
+        </CenteredColumn>
       </ScrollView>
     </KeyboardAvoidingView>
   )
@@ -154,20 +198,18 @@ export default function SignupScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: BG },
   scroll: { flexGrow: 1, padding: 28, paddingTop: 60, justifyContent: 'center' },
-  close: { position: 'absolute', top: 20, right: 20, padding: 6, zIndex: 1 },
+  close: { position: 'absolute', top: -32, right: 0, padding: 6, zIndex: 1 },
   eyebrow: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 11, letterSpacing: 3, color: ACCENT, textTransform: 'uppercase', marginBottom: 8 },
-  title: { fontFamily: FONT_DISPLAY, fontSize: 32, textTransform: 'uppercase', color: TEXT, marginBottom: 20 },
-  roleRow: { flexDirection: 'row', gap: 8, marginBottom: 20 },
-  rolePill: { flex: 1, borderWidth: 1, borderColor: BORDER, borderRadius: 9999, paddingVertical: 10, alignItems: 'center' },
-  rolePillActive: { backgroundColor: ACCENT, borderColor: ACCENT },
-  roleLabel: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 11, letterSpacing: 1, color: MUTED, textTransform: 'uppercase' },
-  roleLabelActive: { color: ON_ACCENT },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 20 },
+  title: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 28, color: TEXT },
+  roleChip: { borderWidth: 1, borderColor: BORDER, borderRadius: 9999, paddingVertical: 4, paddingHorizontal: 12 },
+  roleChipText: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 12, color: MUTED },
   field: { marginBottom: 16 },
   label: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 11, letterSpacing: 1.5, color: MUTED, textTransform: 'uppercase', marginBottom: 6 },
-  input: { backgroundColor: INPUT_BG, borderWidth: 1, borderColor: BORDER, color: TEXT, padding: 14, fontFamily: FONT_BODY, fontSize: 15, borderRadius: 4 },
+  input: { backgroundColor: INPUT_BG, borderWidth: 1, borderColor: BORDER, color: TEXT, padding: 14, fontFamily: FONT_BODY, fontSize: 15, borderRadius: 16 },
   error: { fontFamily: FONT_BODY, fontSize: 13, fontWeight: '700', color: TEXT, marginBottom: 12 },
   submit: { marginTop: 8 },
   switchRow: { flexDirection: 'row', justifyContent: 'center', gap: 6, marginTop: 24 },
-  switchText: { fontFamily: FONT_BODY, fontSize: 13, color: MUTED, textTransform: 'uppercase' },
-  switchLink: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 13, color: TEXT, textDecorationLine: 'underline' },
+  switchText: { fontFamily: FONT_BODY, fontSize: 13, color: MUTED },
+  switchLink: { fontFamily: FONT_BODY, fontSize: 13, color: TEXT, textDecorationLine: 'underline' },
 })

@@ -865,7 +865,7 @@ export const de: Record<TranslationKey, string> = {
   'login.pleaseWait': 'Bitte warten…',
   'login.saveChanges': 'Änderungen speichern',
   'login.noAccount': 'Noch kein Konto? ',
-  'login.hasAccount': 'Bereits ein Konto? ',
+  'login.hasAccount': 'Schon ein Konto? ',
   'login.signUp': 'Registrieren',
   'login.logInLink': 'Anmelden',
   'login.errorEmail': 'Gib eine gültige E-Mail-Adresse ein.',
