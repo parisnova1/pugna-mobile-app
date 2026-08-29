@@ -7,13 +7,19 @@ type Props = {
   onPress: () => void
   variant?: 'primary' | 'outline' | 'ghost'
   disabled?: boolean
+  // Every existing call site relies on the established all-caps micro-copy
+  // (tab labels, list actions, etc.) — defaults true so none of them change.
+  // Onboarding/auth screens opt into the product spec's sentence-case labels
+  // ("Weiter", "Konto erstellen") by passing false.
+  uppercase?: boolean
   style?: StyleProp<ViewStyle>
 }
 
 // Pill-shaped by default — mirrors the web app's global `button { border-radius: 9999px }` rule.
 // Primary is a real frosted-glass surface (GlassSurface); outline/ghost stay flat — a
 // button-sized blur adds little once there's no solid fill to distinguish it from.
-export default function Button({ label, onPress, variant = 'primary', disabled, style }: Props) {
+export default function Button({ label, onPress, variant = 'primary', disabled, uppercase = true, style }: Props) {
+  const labelStyle = [styles.label, !uppercase && styles.labelSentenceCase]
   return (
     <Pressable
       onPress={onPress}
@@ -22,11 +28,11 @@ export default function Button({ label, onPress, variant = 'primary', disabled, 
     >
       {variant === 'primary' ? (
         <GlassSurface variant="pill" strong interactive style={styles.base}>
-          <Text style={styles.label}>{label}</Text>
+          <Text style={labelStyle}>{label}</Text>
         </GlassSurface>
       ) : (
         <View style={[styles.base, variant === 'outline' && styles.outline]}>
-          <Text style={styles.label}>{label}</Text>
+          <Text style={labelStyle}>{label}</Text>
         </View>
       )}
     </Pressable>
@@ -35,8 +41,8 @@ export default function Button({ label, onPress, variant = 'primary', disabled, 
 
 const styles = StyleSheet.create({
   base: {
+    height: 52,
     borderRadius: 9999,
-    paddingVertical: 14,
     paddingHorizontal: 28,
     alignItems: 'center',
     justifyContent: 'center',
@@ -49,6 +55,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     color: TEXT,
   },
+  labelSentenceCase: { textTransform: 'none', letterSpacing: 0, fontSize: 16 },
   pressed: { opacity: 0.75 },
   disabled: { opacity: 0.5 },
 })

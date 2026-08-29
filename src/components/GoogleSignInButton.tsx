@@ -5,7 +5,7 @@ import * as Google from 'expo-auth-session/providers/google'
 import { Ionicons } from '@expo/vector-icons'
 import { useAuth, type Role } from '@/auth/AuthContext'
 import { useLanguage } from '@/i18n/LanguageContext'
-import { ACCENT, ON_ACCENT, FONT_DISPLAY_BOLD } from '@/theme'
+import { TEXT, SURFACE_BORDER, FONT_DISPLAY_BOLD } from '@/theme'
 
 // Required once per app so the browser tab/popup used for the web OAuth
 // redirect actually closes and hands control back to the app.
@@ -16,6 +16,7 @@ export default function GoogleSignInButton({
   homeLocation,
   onSuccess,
   onError,
+  uppercase = true,
 }: {
   // Only relevant the first time this Google identity signs in (account
   // creation) — passed through so a role picked in onboarding, or on the
@@ -25,6 +26,9 @@ export default function GoogleSignInButton({
   homeLocation?: string
   onSuccess: (user: import('@/auth/AuthContext').User) => void
   onError: (message: string) => void
+  // See Button's identical prop — defaults true so existing call sites keep
+  // their established all-caps micro-copy.
+  uppercase?: boolean
 }) {
   const { t } = useLanguage()
   const { loginWithGoogle } = useAuth()
@@ -81,24 +85,30 @@ export default function GoogleSignInButton({
       disabled={(configured && !request) || loading}
       style={({ pressed }) => [styles.base, (pressed || loading) && styles.pressed, configured && !request && styles.disabled]}
     >
-      <Ionicons name="logo-google" size={18} color={ON_ACCENT} />
-      <Text style={styles.label}>{loading ? t('login.pleaseWait') : t('login.continueWithGoogle')}</Text>
+      <Ionicons name="logo-google" size={18} color={TEXT} />
+      <Text style={[styles.label, !uppercase && styles.labelSentenceCase]}>
+        {loading ? t('login.pleaseWait') : t('login.continueWithGoogle')}
+      </Text>
     </Pressable>
   )
 }
 
 const styles = StyleSheet.create({
+  // Bordered secondary, same shape as the primary glass button — never a
+  // solid fill, so it doesn't compete with the real primary CTA's weight.
   base: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
-    backgroundColor: ACCENT,
+    height: 52,
+    borderWidth: 1,
+    borderColor: SURFACE_BORDER,
     borderRadius: 9999,
-    paddingVertical: 14,
     paddingHorizontal: 28,
   },
   pressed: { opacity: 0.75 },
   disabled: { opacity: 0.5 },
-  label: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 13, letterSpacing: 1.2, textTransform: 'uppercase', color: ON_ACCENT },
+  label: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 13, letterSpacing: 1.2, textTransform: 'uppercase', color: TEXT },
+  labelSentenceCase: { textTransform: 'none', letterSpacing: 0, fontSize: 16 },
 })
