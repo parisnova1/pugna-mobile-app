@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { View, Text, ScrollView, Pressable, StyleSheet, Share, Linking, Alert } from 'react-native'
+import { View, Text, ScrollView, Pressable, StyleSheet, Share, Linking, Alert, Modal, TextInput } from 'react-native'
 import { useLocalSearchParams, router } from 'expo-router'
 import * as Calendar from 'expo-calendar'
 import { Ionicons } from '@expo/vector-icons'
@@ -11,15 +11,16 @@ import { useLanguage } from '@/i18n/LanguageContext'
 import Screen from '@/components/Screen'
 import Spinner from '@/components/Spinner'
 import BackButton from '@/components/BackButton'
+import Button from '@/components/Button'
 import BracketView, { type Bout } from '@/components/Bracket'
 import ErrorBoundary from '@/components/ErrorBoundary'
-import { ACCENT, ON_ACCENT, TEXT, CARD, BORDER, MUTED, BG, FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_BODY } from '@/theme'
+import { ACCENT, ON_ACCENT, TEXT, CARD, BORDER, MUTED, BG, INPUT_BG, FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_BODY } from '@/theme'
 
 type EventInfo = {
   id: number; name: string; date: string; location: string; venue: string; discipline: string; status: string
   format: 'bracket' | 'card'; livestream_url: string; qr_token: string; fights: number; fighters: number; views: number; organizer_name: string
 }
-type WeightClass = { id: number; name: string; age_group: string; gender: string; rounds_count: number; round_minutes: number; rest_minutes: number }
+type WeightClass = { id: number; name: string; age_group: string; gender: string; rounds_count: number; round_minutes: number; rest_minutes: number; status?: string }
 type EventFighter = { id: number; name: string; club: string; weight: string; record: string; weight_class_id: number | null }
 type CardBoutPublic = { id: number; fighter_a_name: string; fighter_a_record: string; fighter_b_name: string; fighter_b_record: string; weight_class_text: string; card_position: 'main' | 'co-main' | 'undercard'; rounds: number | null }
 
@@ -41,6 +42,7 @@ function EventDetailScreenInner() {
   const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
   const [saveBusy, setSaveBusy] = useState(false)
+  const [nominating, setNominating] = useState(false)
 
   useEffect(() => {
     setLoading(true)
@@ -146,6 +148,9 @@ function EventDetailScreenInner() {
             {!!event.livestream_url && (
               <ActionButton icon="radio-outline" label={t('eventDetail.watchLive')} onPress={() => Linking.openURL(event.livestream_url)} />
             )}
+            {user?.role === 'club' && event.status === 'Open' && event.format === 'bracket' && (
+              <ActionButton icon="person-add-outline" label={t('eventDetail.nominate')} onPress={() => setNominating(true)} />
+            )}
           </View>
         </View>
 
@@ -170,6 +175,10 @@ function EventDetailScreenInner() {
           {tab === 'fighters' && <FightersTab fighters={fighters} />}
         </View>
       </ScrollView>
+
+      {nominating && (
+        <NominateModal eventId={String(id)} weightClasses={weightClasses} onCancel={() => setNominating(false)} onSent={() => setNominating(false)} />
+      )}
     </Screen>
   )
 }
@@ -331,6 +340,112 @@ function FightersTab({ fighters }: { fighters: EventFighter[] }) {
     </View>
   )
 }
+
+type ClubRosterFighter = { id: number; name: string; weight: string; record: string }
+
+function NominateModal({ eventId, weightClasses, onCancel, onSent }: { eventId: string; weightClasses: WeightClass[]; onCancel: () => void; onSent: () => void }) {
+  const { t } = useLanguage()
+  const openClasses = weightClasses.filter(wc => (wc.status ?? 'open') === 'open')
+  const [rosterFighters, setRosterFighters] = useState<ClubRosterFighter[] | null>(null)
+  const [weightClassId, setWeightClassId] = useState<number | null>(openClasses[0]?.id ?? null)
+  const [fighterId, setFighterId] = useState<number | null>(null)
+  const [note, setNote] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    apiFetch<{ fighters: ClubRosterFighter[] }>(`/api/events/${eventId}/available-club-fighters`)
+      .then(r => { setRosterFighters(r.fighters); setFighterId(r.fighters[0]?.id ?? null) })
+      .catch(() => setRosterFighters([]))
+  }, [eventId])
+
+  const submit = async () => {
+    if (!weightClassId || !fighterId) return
+    setSaving(true)
+    setError(null)
+    try {
+      await apiFetch(`/api/events/${eventId}/weight-classes/${weightClassId}/nominations`, {
+        method: 'POST',
+        body: JSON.stringify({ fighterId, note: note.trim() }),
+      })
+      onSent()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('login.errorGeneric'))
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <Modal transparent animationType="fade" onRequestClose={onCancel}>
+      <Pressable style={modalStyles.overlay} onPress={onCancel}>
+        <Pressable style={modalStyles.card} onPress={e => e.stopPropagation()}>
+          <Text style={modalStyles.title}>{t('eventDetail.nominateTitle')}</Text>
+
+          {openClasses.length === 0 ? (
+            <Text style={modalStyles.emptyText}>{t('eventDetail.nominateNoClasses')}</Text>
+          ) : (
+            <>
+              <Text style={modalStyles.label}>{t('eventDetail.nominateWeightClass')}</Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 14 }}>
+                {openClasses.map(wc => (
+                  <Pressable key={wc.id} onPress={() => setWeightClassId(wc.id)} style={[modalStyles.pill, weightClassId === wc.id && modalStyles.pillActive]}>
+                    <Text style={[modalStyles.pillLabel, weightClassId === wc.id && modalStyles.pillLabelActive]}>{wc.name}</Text>
+                  </Pressable>
+                ))}
+              </View>
+
+              <Text style={modalStyles.label}>{t('eventDetail.nominateFighter')}</Text>
+              {rosterFighters === null ? (
+                <Spinner />
+              ) : rosterFighters.length === 0 ? (
+                <Text style={modalStyles.emptyText}>{t('eventDetail.nominateNoFighters')}</Text>
+              ) : (
+                <View style={{ gap: 6, marginBottom: 14 }}>
+                  {rosterFighters.map(f => (
+                    <Pressable key={f.id} onPress={() => setFighterId(f.id)} style={[modalStyles.row, fighterId === f.id && { borderColor: ACCENT }]}>
+                      <Text style={modalStyles.rowTitle}>{f.name}</Text>
+                      <Text style={modalStyles.rowMeta}>{f.weight} · {f.record}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+              )}
+
+              <Text style={modalStyles.label}>{t('eventDetail.nominateNote')}</Text>
+              <TextInput style={modalStyles.input} value={note} onChangeText={setNote} placeholderTextColor={MUTED} multiline numberOfLines={2} />
+
+              {error && <Text style={modalStyles.errorText}>{error}</Text>}
+              <Button
+                label={saving ? t('login.pleaseWait') : t('eventDetail.nominate')}
+                onPress={submit}
+                disabled={saving || !weightClassId || !fighterId || (rosterFighters?.length ?? 0) === 0}
+                style={{ marginTop: 8 }}
+              />
+            </>
+          )}
+          <Button label={t('common.cancel')} variant="ghost" onPress={onCancel} />
+        </Pressable>
+      </Pressable>
+    </Modal>
+  )
+}
+
+const modalStyles = StyleSheet.create({
+  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center', padding: 20 },
+  card: { backgroundColor: CARD, borderWidth: 1, borderColor: BORDER, borderRadius: 4, padding: 24, width: '100%', maxWidth: 480, maxHeight: '85%' },
+  title: { fontFamily: FONT_DISPLAY, fontSize: 20, textTransform: 'uppercase', color: TEXT, marginBottom: 16 },
+  label: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 11, letterSpacing: 1, color: MUTED, textTransform: 'uppercase', marginBottom: 6 },
+  emptyText: { fontFamily: FONT_BODY, fontSize: 13, color: MUTED, marginBottom: 14 },
+  pill: { borderWidth: 1, borderColor: BORDER, borderRadius: 9999, paddingVertical: 6, paddingHorizontal: 12 },
+  pillActive: { backgroundColor: ACCENT, borderColor: ACCENT },
+  pillLabel: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 12, color: TEXT, textTransform: 'uppercase' },
+  pillLabelActive: { color: ON_ACCENT },
+  row: { backgroundColor: INPUT_BG, borderWidth: 1, borderColor: BORDER, borderRadius: 4, padding: 12 },
+  rowTitle: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 14, color: TEXT, textTransform: 'uppercase' },
+  rowMeta: { fontFamily: FONT_BODY, fontSize: 12, color: MUTED, marginTop: 2 },
+  input: { backgroundColor: INPUT_BG, borderWidth: 1, borderColor: BORDER, color: TEXT, padding: 12, borderRadius: 4, fontFamily: FONT_BODY, fontSize: 14, marginBottom: 14, minHeight: 60, textAlignVertical: 'top' },
+  errorText: { fontFamily: FONT_BODY, fontSize: 13, fontWeight: '700', color: TEXT, marginBottom: 8 },
+})
 
 const styles = StyleSheet.create({
   centerFill: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },

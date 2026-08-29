@@ -20,7 +20,7 @@ type WeightClass = { id: number; name: string; age_group: string; gender: string
 type EventFighter = { id: number; name: string; club: string; weight: string; record: string; weight_class_id: number | null }
 type CardBout = { id: number; fighter_a_name: string; fighter_a_record: string; fighter_b_name: string; fighter_b_record: string; weight_class_text: string; card_position: 'main' | 'co-main' | 'undercard'; rounds: number | null }
 
-type Tab = 'weightClasses' | 'fighters' | 'bracket' | 'fightCard'
+type Tab = 'weightClasses' | 'nominations' | 'fighters' | 'bracket' | 'fightCard'
 
 export default function ManageEventScreen() {
   return <ErrorBoundary><ManageEventInner /></ErrorBoundary>
@@ -56,7 +56,7 @@ function ManageEventInner() {
   if (loading) return <Screen><View style={styles.centerFill}><Spinner /></View></Screen>
   if (!event) return <Screen><View style={styles.centerFill}><Text style={styles.notFound}>Event not found.</Text></View></Screen>
 
-  const tabs: Tab[] = event.format === 'card' ? ['fightCard'] : ['weightClasses', 'fighters', 'bracket']
+  const tabs: Tab[] = event.format === 'card' ? ['fightCard'] : ['weightClasses', 'nominations', 'fighters', 'bracket']
 
   return (
     <Screen>
@@ -84,6 +84,7 @@ function ManageEventInner() {
 
         <View style={styles.tabContent}>
           {tab === 'weightClasses' && <WeightClassesTab eventId={String(id)} discipline={event.discipline} weightClasses={weightClasses} onChanged={load} />}
+          {tab === 'nominations' && <NominationsTab eventId={String(id)} onChanged={load} />}
           {tab === 'fighters' && <FightersTab eventId={String(id)} fighters={fighters} weightClasses={weightClasses} onChanged={load} />}
           {tab === 'bracket' && <BracketTab weightClasses={weightClasses} fighters={fighters} onChanged={load} />}
           {tab === 'fightCard' && <FightCardTab eventId={String(id)} />}
@@ -171,6 +172,67 @@ function EditEventModal({ event, onCancel, onSaved }: { event: EventInfo; onCanc
         </Pressable>
       </Pressable>
     </Modal>
+  )
+}
+
+// ─── Nominations ────────────────────────────────────────────────────────────
+
+type NominationRow = {
+  id: number; status: 'pending' | 'accepted' | 'rejected'; club_name: string
+  fighter_name: string; fighter_weight: string; fighter_record: string; weight_class_name: string; note: string
+}
+
+function NominationsTab({ eventId, onChanged }: { eventId: string; onChanged: () => void }) {
+  const { t } = useLanguage()
+  const [nominations, setNominations] = useState<NominationRow[] | null>(null)
+  const [busyId, setBusyId] = useState<number | null>(null)
+
+  const load = useCallback(() => {
+    apiFetch<{ nominations: NominationRow[] }>(`/api/events/${eventId}/nominations`).then(r => setNominations(r.nominations)).catch(() => setNominations([]))
+  }, [eventId])
+
+  useEffect(() => { load() }, [load])
+
+  const decide = async (id: number, action: 'accept' | 'reject') => {
+    setBusyId(id)
+    try {
+      await apiFetch(`/api/nominations/${id}/${action}`, { method: 'PATCH' })
+      load()
+      onChanged()
+    } catch {
+      /* ignore */
+    } finally {
+      setBusyId(null)
+    }
+  }
+
+  if (nominations === null) return <Spinner />
+  if (nominations.length === 0) return <Text style={styles.emptyBox}>{t('organizer.nominations.none')}</Text>
+
+  return (
+    <View style={{ gap: 8 }}>
+      {nominations.map(n => (
+        <View key={n.id} style={styles.row}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.rowTitle}>{n.fighter_name} · {n.weight_class_name}</Text>
+            <Text style={styles.rowSub}>{n.club_name} · {n.fighter_weight} · {n.fighter_record}</Text>
+            {!!n.note && <Text style={styles.lockedNote}>{n.note}</Text>}
+          </View>
+          {n.status === 'pending' ? (
+            <View style={{ flexDirection: 'row', gap: 10 }}>
+              <Pressable onPress={() => decide(n.id, 'accept')} disabled={busyId === n.id} hitSlop={8}>
+                <Text style={[styles.rowTitle, { color: ACCENT }]}>{t('organizer.nominations.accept')}</Text>
+              </Pressable>
+              <Pressable onPress={() => decide(n.id, 'reject')} disabled={busyId === n.id} hitSlop={8}>
+                <Text style={styles.deleteLink}>{t('organizer.nominations.reject')}</Text>
+              </Pressable>
+            </View>
+          ) : (
+            <Text style={styles.rowSub}>{t(`organizer.nominations.status.${n.status}`)}</Text>
+          )}
+        </View>
+      ))}
+    </View>
   )
 }
 
