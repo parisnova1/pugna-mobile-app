@@ -16,8 +16,8 @@ type EventInfo = {
   id: number; name: string; date: string; location: string; venue: string; discipline: string; status: string
   format: 'bracket' | 'card'; numberOfDays?: number; number_of_days?: number; ringCount?: number; ring_count?: number
 }
-type WeightClass = { id: number; name: string; age_group: string; gender: string; rounds_count: number; round_minutes: number; rest_minutes: number; fighterCount: number }
-type EventFighter = { id: number; name: string; club: string; weight: string; record: string; weight_class_id: number | null }
+type WeightClass = { id: number; name: string; age_group: string; gender: string; rounds_count: number; round_minutes: number; rest_minutes: number; fighterCount: number; status?: 'open' | 'closed' }
+type EventFighter = { id: number; name: string; club: string; weight: string; record: string; weight_class_id: number | null; source?: 'manual' | 'walkup' | 'roster' }
 type CardBout = { id: number; fighter_a_name: string; fighter_a_record: string; fighter_b_name: string; fighter_b_record: string; weight_class_text: string; card_position: 'main' | 'co-main' | 'undercard'; rounds: number | null }
 
 type Tab = 'weightClasses' | 'nominations' | 'fighters' | 'bracket' | 'fightCard'
@@ -251,6 +251,10 @@ function WeightClassesTab({ eventId, discipline, weightClasses, onChanged }: { e
     try { await apiFetch(`/api/weight-classes/${wcId}`, { method: 'DELETE' }); onChanged() } catch { /* ignore */ }
   }
 
+  const toggleStatus = async (wc: WeightClass) => {
+    try { await apiFetch(`/api/weight-classes/${wc.id}`, { method: 'PATCH', body: JSON.stringify({ status: wc.status === 'closed' ? 'open' : 'closed' }) }); onChanged() } catch { /* ignore */ }
+  }
+
   return (
     <View>
       <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
@@ -271,7 +275,12 @@ function WeightClassesTab({ eventId, discipline, weightClasses, onChanged }: { e
                 <Text style={styles.rowTitle}>{wc.name}</Text>
                 <Text style={styles.rowSub}>{wc.age_group} · {wc.gender} · {t('organizer.weightClass.fighterCount', { count: wc.fighterCount })}</Text>
               </View>
-              <Pressable onPress={() => remove(wc.id)} hitSlop={8}><Text style={styles.deleteLink}>{t('common.delete')}</Text></Pressable>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+                <Pressable onPress={() => toggleStatus(wc)} hitSlop={8}>
+                  <Text style={styles.wcBadge}>{t(wc.status === 'closed' ? 'organizer.weightClass.closed' : 'organizer.weightClass.open')}</Text>
+                </Pressable>
+                <Pressable onPress={() => remove(wc.id)} hitSlop={8}><Text style={styles.deleteLink}>{t('common.delete')}</Text></Pressable>
+              </View>
             </View>
           ))}
         </View>
@@ -470,6 +479,7 @@ function FightersTab({ eventId, fighters, weightClasses, onChanged }: { eventId:
               <View style={{ flex: 1 }}>
                 <Text style={styles.rowTitle}>{f.name}</Text>
                 <Text style={styles.rowSub}>{f.club} · {f.weight} · {f.record}</Text>
+                {f.source === 'walkup' && <Text style={styles.walkupBadge}>{t('organizer.fighter.walkup')}</Text>}
               </View>
               <Text style={styles.wcBadge}>{wcName(f.weight_class_id)}</Text>
             </Pressable>
@@ -885,6 +895,7 @@ const styles = StyleSheet.create({
   rowTitle: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 14, color: TEXT, textTransform: 'uppercase' },
   rowSub: { fontFamily: FONT_BODY, fontSize: 12, color: MUTED, marginTop: 2 },
   wcBadge: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 10, letterSpacing: 0.6, color: ACCENT, textTransform: 'uppercase' },
+  walkupBadge: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 10, letterSpacing: 0.6, color: MUTED, textTransform: 'uppercase', marginTop: 4 },
   deleteLink: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 11, letterSpacing: 0.6, color: TEXT, textTransform: 'uppercase', textDecorationLine: 'underline' },
   boutCard: { backgroundColor: CARD, borderWidth: 1, borderColor: BORDER, borderRadius: 4, padding: 14 },
   positionTag: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 10, letterSpacing: 1, color: ACCENT, textTransform: 'uppercase', marginBottom: 4 },
