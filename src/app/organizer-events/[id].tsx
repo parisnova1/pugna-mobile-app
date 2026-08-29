@@ -83,7 +83,7 @@ function ManageEventInner() {
         )}
 
         <View style={styles.tabContent}>
-          {tab === 'weightClasses' && <WeightClassesTab eventId={String(id)} weightClasses={weightClasses} onChanged={load} />}
+          {tab === 'weightClasses' && <WeightClassesTab eventId={String(id)} discipline={event.discipline} weightClasses={weightClasses} onChanged={load} />}
           {tab === 'fighters' && <FightersTab eventId={String(id)} fighters={fighters} weightClasses={weightClasses} onChanged={load} />}
           {tab === 'bracket' && <BracketTab weightClasses={weightClasses} fighters={fighters} onChanged={load} />}
           {tab === 'fightCard' && <FightCardTab eventId={String(id)} />}
@@ -179,10 +179,11 @@ function EditEventModal({ event, onCancel, onSaved }: { event: EventInfo; onCanc
 const AGE_GROUPS = ['adult', 'youth', 'children'] as const
 const GENDERS = ['male', 'female', 'mixed'] as const
 
-function WeightClassesTab({ eventId, weightClasses, onChanged }: { eventId: string; weightClasses: WeightClass[]; onChanged: () => void }) {
+function WeightClassesTab({ eventId, discipline, weightClasses, onChanged }: { eventId: string; discipline: string; weightClasses: WeightClass[]; onChanged: () => void }) {
   const { t } = useLanguage()
   const [adding, setAdding] = useState(false)
   const [templating, setTemplating] = useState(false)
+  const [packing, setPacking] = useState(false)
 
   const remove = async (wcId: number) => {
     try { await apiFetch(`/api/weight-classes/${wcId}`, { method: 'DELETE' }); onChanged() } catch { /* ignore */ }
@@ -190,9 +191,12 @@ function WeightClassesTab({ eventId, weightClasses, onChanged }: { eventId: stri
 
   return (
     <View>
-      <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
+      <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
         <Button label={t('organizer.weightClass.add')} onPress={() => setAdding(true)} style={{ flex: 1, paddingVertical: 10 }} />
         <Button label={t('organizer.weightClass.template')} variant="outline" onPress={() => setTemplating(true)} style={{ flex: 1, paddingVertical: 10 }} />
+        {discipline === 'Boxing' && (
+          <Button label={t('organizer.weightClass.pack')} variant="outline" onPress={() => setPacking(true)} style={{ flex: 1, paddingVertical: 10 }} />
+        )}
       </View>
 
       {weightClasses.length === 0 ? (
@@ -217,7 +221,76 @@ function WeightClassesTab({ eventId, weightClasses, onChanged }: { eventId: stri
       {templating && (
         <TemplateModal eventId={eventId} onCancel={() => setTemplating(false)} onSaved={() => { setTemplating(false); onChanged() }} />
       )}
+      {packing && (
+        <PackModal eventId={eventId} discipline={discipline} onCancel={() => setPacking(false)} onSaved={() => { setPacking(false); onChanged() }} />
+      )}
     </View>
+  )
+}
+
+type TemplatePack = { id: number; slug: string; name: string; division: string; classes: { id: number }[] }
+
+function PackModal({ eventId, discipline, onCancel, onSaved }: { eventId: string; discipline: string; onCancel: () => void; onSaved: () => void }) {
+  const { t } = useLanguage()
+  const [packs, setPacks] = useState<TemplatePack[] | null>(null)
+  const [selected, setSelected] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    apiFetch<{ packs: TemplatePack[] }>(`/api/template-packs?discipline=${encodeURIComponent(discipline)}`)
+      .then(r => { setPacks(r.packs); setSelected(r.packs[0]?.slug ?? null) })
+      .catch(() => setPacks([]))
+  }, [discipline])
+
+  const submit = async () => {
+    if (!selected) return
+    setSaving(true)
+    setError(null)
+    try {
+      await apiFetch(`/api/events/${eventId}/weight-classes/from-pack`, { method: 'POST', body: JSON.stringify({ packSlug: selected }) })
+      onSaved()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('login.errorGeneric'))
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <Modal transparent animationType="fade" onRequestClose={onCancel}>
+      <Pressable style={styles.modalOverlay} onPress={onCancel}>
+        <Pressable style={styles.modalCard} onPress={e => e.stopPropagation()}>
+          <Text style={styles.modalTitle}>{t('organizer.weightClass.pack')}</Text>
+          <Text style={styles.lockedNote}>{t('organizer.weightClass.packConfirm')}</Text>
+
+          {packs === null ? (
+            <Spinner />
+          ) : packs.length === 0 ? (
+            <Text style={styles.lockedNote}>{t('organizer.weightClass.packEmpty')}</Text>
+          ) : (
+            <View style={{ gap: 8, marginTop: 8 }}>
+              {packs.map(pack => (
+                <Pressable
+                  key={pack.slug}
+                  onPress={() => setSelected(pack.slug)}
+                  style={[styles.row, selected === pack.slug && { borderColor: ACCENT }]}
+                >
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.rowTitle}>{pack.name}</Text>
+                    <Text style={styles.rowSub}>{t('organizer.weightClass.classCount', { count: pack.classes.length })}</Text>
+                  </View>
+                </Pressable>
+              ))}
+            </View>
+          )}
+
+          {error && <Text style={styles.errorText}>{error}</Text>}
+          <Button label={saving ? t('login.pleaseWait') : t('common.confirm')} onPress={submit} disabled={saving || !selected} style={{ marginTop: 8 }} />
+          <Button label={t('common.cancel')} variant="ghost" onPress={onCancel} />
+        </Pressable>
+      </Pressable>
+    </Modal>
   )
 }
 
