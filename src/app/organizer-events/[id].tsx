@@ -680,21 +680,24 @@ function BracketTab({ weightClasses, fighters, onChanged }: { weightClasses: Wei
   )
 }
 
+const BOUT_METHODS = ['Decision', 'KO', 'TKO', 'RSC', 'Walkover', 'Abd', 'DQ', 'Injury'] as const
+
 function ResultModal({ bout, fighters, onCancel, onSaved }: { bout: Bout; fighters: Record<number, { name: string; club: string }>; onCancel: () => void; onSaved: () => void }) {
   const { t } = useLanguage()
   const [winnerId, setWinnerId] = useState<number | null>(null)
-  const [method, setMethod] = useState('')
+  const [method, setMethod] = useState<typeof BOUT_METHODS[number] | null>(null)
+  const [methodNote, setMethodNote] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const candidates = [bout.fighter_red_id, bout.fighter_blue_id].filter((id): id is number => id !== null)
 
   const submit = async () => {
-    if (!winnerId) { setError(t('organizer.eventForm.errorRequired')); return }
+    if (!winnerId || !method) { setError(t('organizer.eventForm.errorRequired')); return }
     setSaving(true)
     setError(null)
     try {
-      await apiFetch(`/api/bouts/${bout.id}/result`, { method: 'PATCH', body: JSON.stringify({ winnerId, method: method.trim() || undefined }) })
+      await apiFetch(`/api/bouts/${bout.id}/result`, { method: 'PATCH', body: JSON.stringify({ winnerId, method, methodNote: methodNote.trim() || undefined }) })
       onSaved()
     } catch (err) {
       setError(err instanceof Error ? err.message : t('login.errorGeneric'))
@@ -716,7 +719,16 @@ function ResultModal({ bout, fighters, onCancel, onSaved }: { bout: Bout; fighte
             ))}
           </View>
           <Field label={t('organizer.result.method')}>
-            <TextInput style={styles.input} value={method} onChangeText={setMethod} placeholder={t('organizer.result.methodPlaceholder')} placeholderTextColor={MUTED} />
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+              {BOUT_METHODS.map(m => (
+                <Pressable key={m} onPress={() => setMethod(m)} style={[styles.pill, method === m && styles.pillActive]}>
+                  <Text style={[styles.pillLabel, method === m && styles.pillLabelActive]}>{m}</Text>
+                </Pressable>
+              ))}
+            </View>
+          </Field>
+          <Field label={t('organizer.result.methodNote')}>
+            <TextInput style={styles.input} value={methodNote} onChangeText={setMethodNote} placeholder={t('organizer.result.methodPlaceholder')} placeholderTextColor={MUTED} />
           </Field>
           {error && <Text style={styles.errorText}>{error}</Text>}
           <Button label={saving ? t('login.pleaseWait') : t('organizer.result.save')} onPress={submit} disabled={saving} style={{ marginTop: 8 }} />
