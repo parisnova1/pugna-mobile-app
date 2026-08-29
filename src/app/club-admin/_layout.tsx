@@ -8,7 +8,7 @@ import { apiFetch } from '@/lib/api'
 import { Icon, type IconName } from '@/components/icons/Icon'
 import SectionHeader from '@/components/SectionHeader'
 import DrawerNavItem from '@/components/DrawerNavItem'
-import { BG, BORDER, TEXT } from '@/theme'
+import { BG, CARD, BORDER, TEXT, MODAL_SCRIM } from '@/theme'
 
 // Drawer, not Tabs — this is the one section of the app with a grouped,
 // multi-section nav (Home/Training/Events/Club/Community/Live/Settings),
@@ -37,8 +37,11 @@ export default function ClubAdminLayout() {
         // hamburger + a stable brand mark instead of duplicating that title.
         title: 'Pugna',
         drawerType: 'front',
-        drawerStyle: { backgroundColor: BG, width: 280 },
-        overlayColor: 'rgba(0,0,0,0.5)',
+        // A shade off pure BG so the drawer reads as an elevated glass panel
+        // over the black content behind it, rather than blending into it —
+        // this is the app's single highest-visibility nav chrome surface.
+        drawerStyle: { backgroundColor: CARD, width: 280, borderRightWidth: 1, borderRightColor: BORDER },
+        overlayColor: MODAL_SCRIM,
       }}
       drawerContent={props => <ClubDrawerContent {...props} />}
     >

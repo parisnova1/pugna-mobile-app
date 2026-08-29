@@ -2,7 +2,7 @@ import { Tabs, Redirect } from 'expo-router'
 import { Icon } from '@/components/icons/Icon'
 import { useAuth } from '@/auth/AuthContext'
 import { useLanguage } from '@/i18n/LanguageContext'
-import { ACCENT, MUTED, BG, BORDER, FONT_DISPLAY_BOLD } from '@/theme'
+import { ACCENT, MUTED, CARD, BORDER, FONT_DISPLAY_BOLD } from '@/theme'
 
 export default function OrganizerTabsLayout() {
   const { t } = useLanguage()
@@ -20,7 +20,7 @@ export default function OrganizerTabsLayout() {
         headerShown: false,
         tabBarActiveTintColor: ACCENT,
         tabBarInactiveTintColor: MUTED,
-        tabBarStyle: { backgroundColor: BG, borderTopColor: BORDER },
+        tabBarStyle: { backgroundColor: CARD, borderTopColor: BORDER },
         tabBarLabelStyle: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 10, letterSpacing: 0.6, textTransform: 'uppercase' },
       }}
     >

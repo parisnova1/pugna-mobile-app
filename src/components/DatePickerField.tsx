@@ -3,7 +3,7 @@ import { Text, Pressable, Modal, StyleSheet } from 'react-native'
 import { Calendar, type DateData } from 'react-native-calendars'
 import { Icon } from './icons/Icon'
 import { formatDisplayDate } from '@/lib/date'
-import { ACCENT, ON_ACCENT, CARD, BORDER, MUTED, TEXT, INPUT_BG, FONT_DISPLAY_BOLD, FONT_BODY } from '@/theme'
+import { ACCENT, ON_ACCENT, CARD, BORDER, MUTED, TEXT, INPUT_BG, MODAL_SCRIM, FONT_DISPLAY_BOLD, FONT_BODY } from '@/theme'
 
 // Replaces a plain "type YYYY-MM-DD" TextInput with a real calendar picker.
 // react-native-calendars is pure JS (no native linking), so it renders
@@ -70,7 +70,7 @@ const styles = StyleSheet.create({
   input: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: INPUT_BG, borderWidth: 1, borderColor: BORDER, padding: 12, borderRadius: 4 },
   valueText: { fontFamily: FONT_BODY, fontSize: 14, color: TEXT },
   placeholderText: { fontFamily: FONT_BODY, fontSize: 14, color: MUTED },
-  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center', padding: 20 },
+  overlay: { flex: 1, backgroundColor: MODAL_SCRIM, alignItems: 'center', justifyContent: 'center', padding: 20 },
   card: { backgroundColor: CARD, borderWidth: 1, borderColor: BORDER, borderRadius: 4, padding: 8, width: '100%', maxWidth: 380 },
   calendar: { borderRadius: 4 },
 })

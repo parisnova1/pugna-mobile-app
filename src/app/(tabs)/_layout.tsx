@@ -3,7 +3,7 @@ import { Icon } from '@/components/icons/Icon'
 import { useAuth } from '@/auth/AuthContext'
 import { useOnboarding } from '@/onboarding/OnboardingContext'
 import { useLanguage } from '@/i18n/LanguageContext'
-import { ACCENT, MUTED, BG, BORDER, FONT_DISPLAY_BOLD } from '@/theme'
+import { ACCENT, MUTED, CARD, BORDER, FONT_DISPLAY_BOLD } from '@/theme'
 
 export default function TabsLayout() {
   const { t } = useLanguage()
@@ -27,7 +27,11 @@ export default function TabsLayout() {
         headerShown: false,
         tabBarActiveTintColor: ACCENT,
         tabBarInactiveTintColor: MUTED,
-        tabBarStyle: { backgroundColor: BG, borderTopColor: BORDER },
+        // A real blurred-over-content tab bar needs `position: 'absolute'`
+        // plus matching bottom-inset padding added to every tab screen's
+        // scroll content — out of scope for this pass. Kept in normal
+        // layout flow with a glass-toned flat fill instead.
+        tabBarStyle: { backgroundColor: CARD, borderTopColor: BORDER },
         tabBarLabelStyle: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 10, letterSpacing: 0.6, textTransform: 'uppercase' },
       }}
     >
