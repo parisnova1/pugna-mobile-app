@@ -19,7 +19,9 @@ import { ACCENT, ON_ACCENT, TEXT, CARD, BORDER, MUTED, BG, INPUT_BG, FONT_DISPLA
 type EventInfo = {
   id: number; name: string; date: string; location: string; venue: string; discipline: string; status: string
   format: 'bracket' | 'card'; livestream_url: string; qr_token: string; fights: number; fighters: number; views: number; organizer_name: string
+  current_bout_id: number | null
 }
+type LiveBout = { id: number; weight_class_id: number; fighterRed: { name: string } | null; fighterBlue: { name: string } | null; status: string }
 type WeightClass = { id: number; name: string; age_group: string; gender: string; rounds_count: number; round_minutes: number; rest_minutes: number; status?: string }
 type EventFighter = { id: number; name: string; club: string; weight: string; record: string; weight_class_id: number | null }
 type CardBoutPublic = { id: number; fighter_a_name: string; fighter_a_record: string; fighter_b_name: string; fighter_b_record: string; weight_class_text: string; card_position: 'main' | 'co-main' | 'undercard'; rounds: number | null }
@@ -45,6 +47,7 @@ function EventDetailScreenInner() {
   const [nominating, setNominating] = useState(false)
   const [muted, setMuted] = useState(false)
   const [muteBusy, setMuteBusy] = useState(false)
+  const [liveBout, setLiveBout] = useState<LiveBout | null>(null)
 
   useEffect(() => {
     setLoading(true)
@@ -71,6 +74,26 @@ function EventDetailScreenInner() {
       .then(r => setMuted(r.eventIds.includes(Number(id))))
       .catch(() => {})
   }, [id, user])
+
+  useEffect(() => {
+    if (!event?.current_bout_id) { setLiveBout(null); return }
+    apiFetch<{ bout: LiveBout }>(`/api/public/bouts/${event.current_bout_id}`)
+      .then(r => setLiveBout(r.bout))
+      .catch(() => setLiveBout(null))
+  }, [event?.current_bout_id])
+
+  useEffect(() => {
+    if (!event?.qr_token) return
+    const unsubscribe = subscribeToEvent(event.qr_token, msg => {
+      if (msg.type === 'bout:live') {
+        setEvent(prev => (prev ? { ...prev, current_bout_id: msg.boutId } : prev))
+      }
+      if (msg.type === 'bout:result' && msg.boutId === event.current_bout_id) {
+        setEvent(prev => (prev ? { ...prev, current_bout_id: null } : prev))
+      }
+    })
+    return unsubscribe
+  }, [event?.qr_token, event?.current_bout_id])
 
   const toggleMute = async () => {
     setMuteBusy(true)
@@ -176,6 +199,16 @@ function EventDetailScreenInner() {
               <ActionButton icon={muted ? 'notifications-off-outline' : 'notifications-outline'} label={muted ? t('eventDetail.unmute') : t('eventDetail.mute')} disabled={muteBusy} onPress={toggleMute} />
             )}
           </View>
+
+          {liveBout && (
+            <View style={styles.liveCard}>
+              <View style={styles.liveDot} />
+              <Text style={styles.liveLabel}>{t('eventDetail.liveNow')}</Text>
+              <Text style={styles.liveFighters}>
+                {liveBout.fighterRed?.name ?? '?'} <Text style={styles.liveVs}>vs</Text> {liveBout.fighterBlue?.name ?? '?'}
+              </Text>
+            </View>
+          )}
         </View>
 
         <View style={styles.tabBar}>
@@ -485,6 +518,11 @@ const styles = StyleSheet.create({
   actionButton: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: CARD, borderWidth: 1, borderColor: BORDER, borderRadius: 9999, paddingVertical: 8, paddingHorizontal: 14 },
   actionButtonActive: { backgroundColor: ACCENT, borderColor: ACCENT },
   actionLabel: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 11, letterSpacing: 0.6, color: TEXT, textTransform: 'uppercase' },
+  liveCard: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: CARD, borderWidth: 1, borderColor: ACCENT, borderRadius: 4, padding: 14, marginTop: 16 },
+  liveDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: ACCENT },
+  liveLabel: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 11, letterSpacing: 1, color: ACCENT, textTransform: 'uppercase' },
+  liveFighters: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 13, color: TEXT, textTransform: 'uppercase', flex: 1, textAlign: 'right' },
+  liveVs: { color: MUTED },
   tabBar: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: BORDER, backgroundColor: BG, paddingHorizontal: 12 },
   tabButton: { paddingVertical: 14, paddingHorizontal: 12 },
   tabLabel: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 13, letterSpacing: 0.8, color: MUTED, textTransform: 'uppercase' },

@@ -15,6 +15,7 @@ import { ACCENT, ON_ACCENT, TEXT, CARD, BORDER, MUTED, INPUT_BG, FONT_DISPLAY, F
 type EventInfo = {
   id: number; name: string; date: string; location: string; venue: string; discipline: string; status: string
   format: 'bracket' | 'card'; numberOfDays?: number; number_of_days?: number; ringCount?: number; ring_count?: number
+  current_bout_id?: number | null
 }
 type WeightClass = { id: number; name: string; age_group: string; gender: string; rounds_count: number; round_minutes: number; rest_minutes: number; fighterCount: number; status?: 'open' | 'closed' }
 type EventFighter = { id: number; name: string; club: string; weight: string; record: string; weight_class_id: number | null; source?: 'manual' | 'walkup' | 'roster' }
@@ -86,7 +87,7 @@ function ManageEventInner() {
           {tab === 'weightClasses' && <WeightClassesTab eventId={String(id)} discipline={event.discipline} weightClasses={weightClasses} onChanged={load} />}
           {tab === 'nominations' && <NominationsTab eventId={String(id)} onChanged={load} />}
           {tab === 'fighters' && <FightersTab eventId={String(id)} fighters={fighters} weightClasses={weightClasses} onChanged={load} />}
-          {tab === 'bracket' && <BracketTab weightClasses={weightClasses} fighters={fighters} onChanged={load} />}
+          {tab === 'bracket' && <BracketTab eventId={String(id)} currentBoutId={event.current_bout_id ?? null} weightClasses={weightClasses} fighters={fighters} onChanged={load} />}
           {tab === 'fightCard' && <FightCardTab eventId={String(id)} />}
         </View>
       </ScrollView>
@@ -602,13 +603,19 @@ function AssignWeightClassModal({ fighter, eventId, weightClasses, onCancel, onS
 
 // ─── Bracket ────────────────────────────────────────────────────────────────
 
-function BracketTab({ weightClasses, fighters, onChanged }: { weightClasses: WeightClass[]; fighters: EventFighter[]; onChanged: () => void }) {
+function BracketTab({ eventId, currentBoutId, weightClasses, fighters, onChanged }: { eventId: string; currentBoutId: number | null; weightClasses: WeightClass[]; fighters: EventFighter[]; onChanged: () => void }) {
   const { t } = useLanguage()
   const [selected, setSelected] = useState<number | null>(weightClasses[0]?.id ?? null)
   const [bouts, setBouts] = useState<Bout[]>([])
   const [loading, setLoading] = useState(false)
   const [generating, setGenerating] = useState(false)
+  const [liveBusy, setLiveBusy] = useState(false)
   const [resultTarget, setResultTarget] = useState<Bout | null>(null)
+
+  const setLive = async (boutId: number | null) => {
+    setLiveBusy(true)
+    try { await apiFetch(`/api/events/${eventId}/current-bout`, { method: 'PATCH', body: JSON.stringify({ boutId }) }); onChanged() } catch { /* ignore */ } finally { setLiveBusy(false) }
+  }
 
   const fightersById = Object.fromEntries(fighters.map(f => [f.id, { name: f.name, club: f.club }]))
   const selectedWc = weightClasses.find(w => w.id === selected) ?? null
@@ -667,6 +674,23 @@ function BracketTab({ weightClasses, fighters, onChanged }: { weightClasses: Wei
       )}
 
       {loading ? <Spinner /> : <BracketView bouts={bouts} fighters={fightersById} onBoutClick={setResultTarget} />}
+
+      {bouts.filter(b => b.status === 'scheduled').length > 0 && (
+        <View style={{ marginTop: 20, gap: 8 }}>
+          <Text style={styles.label}>{t('organizer.live.title')}</Text>
+          {bouts.filter(b => b.status === 'scheduled').map(b => {
+            const isLive = currentBoutId === b.id
+            return (
+              <View key={b.id} style={styles.row}>
+                <Text style={styles.rowTitle}>{fightersById[b.fighter_red_id ?? -1]?.name ?? '?'} vs {fightersById[b.fighter_blue_id ?? -1]?.name ?? '?'}</Text>
+                <Pressable disabled={liveBusy} onPress={() => setLive(isLive ? null : b.id)}>
+                  <Text style={[styles.deleteLink, isLive && { color: ACCENT }]}>{isLive ? t('organizer.live.end') : t('organizer.live.go')}</Text>
+                </Pressable>
+              </View>
+            )
+          })}
+        </View>
+      )}
 
       {resultTarget && (
         <ResultModal
