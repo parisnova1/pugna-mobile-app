@@ -662,6 +662,9 @@ function BracketTab({ weightClasses, fighters, onChanged }: { weightClasses: Wei
         />
       )}
       {selectedWc && selectedWc.fighterCount < 2 && <Text style={styles.lockedNote}>{t('organizer.bracket.needTwoFighters')}</Text>}
+      {selectedWc && selectedWc.fighterCount >= 2 && selectedWc.status === 'closed' && bouts.length === 0 && (
+        <Text style={[styles.lockedNote, { color: ACCENT }]}>{t('organizer.bracket.readyToGenerate')}</Text>
+      )}
 
       {loading ? <Spinner /> : <BracketView bouts={bouts} fighters={fightersById} onBoutClick={setResultTarget} />}
 
