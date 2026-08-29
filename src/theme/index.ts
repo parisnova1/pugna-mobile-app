@@ -3,34 +3,38 @@
 // here instead of per-file duplication, since native styling isn't
 // inline-CSS-in-JSX the same way the web app's is.
 //
-// Monochrome light theme: white background, black text, grey for surfaces,
-// borders, and interactive highlights — no color hue anywhere (no blue, no
-// red, no green), including for error/status states.
-export const BG = '#ffffff'
-export const CARD = '#f4f4f4'
-export const BORDER = '#dcdcdc'
-export const MUTED = '#767676'
-export const TEXT = '#111111'
-export const ACCENT = '#4a4a4a'
-export const ON_ACCENT = '#ffffff'
-export const INPUT_BG = '#f4f4f4'
+// Dark OLED "Liquid Glass" theme: true-black background, white text,
+// translucent frosted-glass surfaces with a white top-edge specular
+// highlight. Color stays reserved for meaning, same discipline as the prior
+// monochrome theme — general UI (buttons, active nav state, borders) is
+// white-on-black glass, not a saturated brand hue. The only real hues are
+// LIVE_RED / CAUTION_AMBER / POSITIVE_GREEN, used only where they signal a
+// status (a live bout, an injury pull-out, an accepted nomination).
+export const BG = '#000000'
+export const CARD = 'rgba(255,255,255,0.06)'
+export const BORDER = 'rgba(255,255,255,0.14)'
+export const MUTED = '#9a9a9a'
+export const TEXT = '#ffffff'
+export const ACCENT = '#ffffff'
+export const ON_ACCENT = '#000000'
+export const INPUT_BG = 'rgba(255,255,255,0.06)'
 
-// Liquid Glass tokens — additive only for now (dark OLED + glass panels).
-// Not yet applied to any screen: the full rollout happens in one pass once
-// every net-new sprint screen already exists, to avoid restyling twice. See
-// the boxing-sprint plan's Slice 10.
-export const GLASS_BG = '#000000'
-export const GLASS_SURFACE = 'rgba(255,255,255,0.06)'
-export const GLASS_BORDER = 'rgba(255,255,255,0.14)'
-export const GLASS_SPECULAR = 'rgba(255,255,255,0.35)'
-export const GLASS_TEXT = '#ffffff'
-export const GLASS_MUTED = '#9a9a9a'
-export const GLASS_ACCENT = '#0a84ff'
-export const GLASS_ON_ACCENT = '#ffffff'
-export const GLASS_DANGER = '#ff453a'
-export const GLASS_CAUTION = '#ff9f0a'
-export const GLASS_POSITIVE = '#30d158'
-export const GLASS_BLUR_INTENSITY = 40
+// Glass surface tokens, for the small set of high-visibility surfaces that
+// get a real blur treatment (primary buttons, drawer active row, tab bar,
+// modal sheets) rather than the flat CARD/BORDER treatment ordinary list
+// rows use — see components/glass/GlassSurface.tsx.
+export const SURFACE = 'rgba(255,255,255,0.06)'
+export const SURFACE_STRONG = 'rgba(255,255,255,0.14)'
+export const SURFACE_BORDER = 'rgba(255,255,255,0.14)'
+export const SPECULAR = 'rgba(255,255,255,0.35)'
+export const BLUR_INTENSITY = 40
+export const MODAL_SCRIM = 'rgba(0,0,0,0.6)'
+
+// Semantic status colors — the only hue in the app. Apple HIG system colors,
+// chosen for legibility against true black.
+export const LIVE_RED = '#ff453a'
+export const CAUTION_AMBER = '#ff9f0a'
+export const POSITIVE_GREEN = '#30d158'
 
 export const FONT_DISPLAY = 'Geist_900Black'
 export const FONT_DISPLAY_BOLD = 'Geist_700Bold'

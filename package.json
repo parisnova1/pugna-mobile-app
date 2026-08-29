@@ -11,6 +11,7 @@
     "@react-navigation/drawer": "^7.13.10",
     "expo": "~57.0.15",
     "expo-auth-session": "~57.0.9",
+    "expo-blur": "~57.0.2",
     "expo-calendar": "~57.0.2",
     "expo-camera": "~57.0.4",
     "expo-clipboard": "~57.0.1",

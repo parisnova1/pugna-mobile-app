@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { View, Platform } from 'react-native'
 import { Stack } from 'expo-router'
+import { StatusBar } from 'expo-status-bar'
 import * as SplashScreen from 'expo-splash-screen'
 import { AuthProvider } from '@/auth/AuthContext'
 import { LanguageProvider } from '@/i18n/LanguageContext'
@@ -41,6 +42,7 @@ export default function RootLayout() {
   // pattern. This Stack just registers every route, same as before.
   return (
     <View style={{ flex: 1, backgroundColor: BG }}>
+      <StatusBar style="light" />
       <LanguageProvider>
         <AuthProvider>
           <OnboardingProvider>
