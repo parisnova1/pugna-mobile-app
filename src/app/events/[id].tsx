@@ -43,6 +43,8 @@ function EventDetailScreenInner() {
   const [saved, setSaved] = useState(false)
   const [saveBusy, setSaveBusy] = useState(false)
   const [nominating, setNominating] = useState(false)
+  const [muted, setMuted] = useState(false)
+  const [muteBusy, setMuteBusy] = useState(false)
 
   useEffect(() => {
     setLoading(true)
@@ -62,6 +64,25 @@ function EventDetailScreenInner() {
       .then(r => setSaved(r.events.some(e => e.id === Number(id))))
       .catch(() => {})
   }, [id, user?.role])
+
+  useEffect(() => {
+    if (!user) return
+    apiFetch<{ eventIds: number[] }>('/api/public/events/muted')
+      .then(r => setMuted(r.eventIds.includes(Number(id))))
+      .catch(() => {})
+  }, [id, user])
+
+  const toggleMute = async () => {
+    setMuteBusy(true)
+    try {
+      if (muted) { await apiFetch(`/api/public/events/${id}/mute`, { method: 'DELETE' }); setMuted(false) }
+      else { await apiFetch(`/api/public/events/${id}/mute`, { method: 'POST' }); setMuted(true) }
+    } catch {
+      /* leave state unchanged on failure */
+    } finally {
+      setMuteBusy(false)
+    }
+  }
 
   const toggleSave = async () => {
     setSaveBusy(true)
@@ -150,6 +171,9 @@ function EventDetailScreenInner() {
             )}
             {user?.role === 'club' && event.status === 'Open' && event.format === 'bracket' && (
               <ActionButton icon="person-add-outline" label={t('eventDetail.nominate')} onPress={() => setNominating(true)} />
+            )}
+            {!!user && (
+              <ActionButton icon={muted ? 'notifications-off-outline' : 'notifications-outline'} label={muted ? t('eventDetail.unmute') : t('eventDetail.mute')} disabled={muteBusy} onPress={toggleMute} />
             )}
           </View>
         </View>
