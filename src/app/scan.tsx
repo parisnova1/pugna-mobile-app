@@ -4,16 +4,10 @@ import { CameraView, useCameraPermissions } from 'expo-camera'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { apiFetch } from '@/lib/api'
+import { extractEventIdentifier } from '@/lib/parsePugnaUrl'
 import { useLanguage } from '@/i18n/LanguageContext'
 import Button from '@/components/Button'
 import { TEXT, BORDER, MUTED, BG, INPUT_BG, FONT_DISPLAY, FONT_BODY } from '@/theme'
-
-const EVENT_PATH = /\/(?:events|e)\/([^/?#]+)/
-
-function extractEventIdentifier(raw: string): string {
-  const match = EVENT_PATH.exec(raw.trim())
-  return match ? match[1] : raw.trim()
-}
 
 export default function ScanScreen() {
   const { t } = useLanguage()

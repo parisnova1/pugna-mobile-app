@@ -15,6 +15,23 @@ export const ACCENT = '#4a4a4a'
 export const ON_ACCENT = '#ffffff'
 export const INPUT_BG = '#f4f4f4'
 
+// Liquid Glass tokens — additive only for now (dark OLED + glass panels).
+// Not yet applied to any screen: the full rollout happens in one pass once
+// every net-new sprint screen already exists, to avoid restyling twice. See
+// the boxing-sprint plan's Slice 10.
+export const GLASS_BG = '#000000'
+export const GLASS_SURFACE = 'rgba(255,255,255,0.06)'
+export const GLASS_BORDER = 'rgba(255,255,255,0.14)'
+export const GLASS_SPECULAR = 'rgba(255,255,255,0.35)'
+export const GLASS_TEXT = '#ffffff'
+export const GLASS_MUTED = '#9a9a9a'
+export const GLASS_ACCENT = '#0a84ff'
+export const GLASS_ON_ACCENT = '#ffffff'
+export const GLASS_DANGER = '#ff453a'
+export const GLASS_CAUTION = '#ff9f0a'
+export const GLASS_POSITIVE = '#30d158'
+export const GLASS_BLUR_INTENSITY = 40
+
 export const FONT_DISPLAY = 'Geist_900Black'
 export const FONT_DISPLAY_BOLD = 'Geist_700Bold'
 export const FONT_BODY = 'Geist_400Regular'
