@@ -42,7 +42,7 @@ export default function SignupScreen() {
   const { signup } = useAuth()
   const { t } = useLanguage()
   const {
-    role: onboardingRole, disciplines, homeLocation: onboardingLocation, homeLat, homeLng,
+    role: onboardingRole, disciplines, homeLocation: onboardingLocation, homeLat, homeLng, orgName,
     pendingFollows, wantsNotifications, setPendingFollows, finishOnboarding,
   } = useOnboarding()
   const params = useLocalSearchParams<{ role?: string; name?: string }>()
@@ -53,7 +53,9 @@ export default function SignupScreen() {
     ? (onboardingRole as Role)
     : ROLES.includes(params.role as Role) ? (params.role as Role) : 'viewer'
 
-  const [name, setName] = useState(params.name ?? '')
+  // Prefilled from onboarding's organizer-info.tsx (organizer) — stays
+  // editable either way, same as every other field on this screen.
+  const [name, setName] = useState(params.name ?? (role === 'organizer' ? orgName : ''))
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [homeLocation, setHomeLocation] = useState(onboardingLocation)
@@ -122,12 +124,14 @@ export default function SignupScreen() {
           <OrDivider />
 
           <View style={styles.field}>
-            <Text style={styles.label}>{role === 'club' ? t('login.clubName') : t('login.name')}</Text>
+            <Text style={styles.label}>
+              {role === 'club' ? t('login.clubName') : role === 'organizer' ? t('onboarding.orgNameLabel') : t('login.name')}
+            </Text>
             <TextInput
               style={styles.input}
               value={name}
               onChangeText={setName}
-              placeholder={role === 'club' ? t('login.clubNamePlaceholder') : t('login.namePlaceholder')}
+              placeholder={role === 'club' ? t('login.clubNamePlaceholder') : role === 'organizer' ? t('onboarding.orgNamePlaceholder') : t('login.namePlaceholder')}
               placeholderTextColor={MUTED}
               autoComplete="name"
             />

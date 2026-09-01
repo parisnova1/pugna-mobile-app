@@ -10,6 +10,7 @@ const PERSONA_KEY = 'pugna:onboarding:persona'
 const VIEWER_GOALS_KEY = 'pugna:onboarding:viewerGoals'
 const PENDING_FOLLOW_KEY = 'pugna:onboarding:pendingFollows'
 const WANTS_NOTIFICATIONS_KEY = 'pugna:onboarding:wantsNotifications'
+const ORG_NAME_KEY = 'pugna:onboarding:orgName'
 
 // Which onboarding persona card the user tapped. 'athlete'/'coach'/'fan'
 // remain from the original 4-tile viewer breakdown, kept alive for the
@@ -45,6 +46,10 @@ type OnboardingContextValue = {
   // null = no choice made yet on the Permissions primer; true/false once the
   // user has pressed either "Fight-Alerts aktivieren" or "Jetzt nicht".
   wantsNotifications: boolean | null
+  // Set on the organizer-only (onboarding)/organizer-info.tsx step —
+  // prefills the name field on (auth)/signup.tsx for role 'organizer',
+  // mirroring how club's name is collected today.
+  orgName: string
   setRole: (role: Role | null) => void
   setPersona: (persona: Persona | null) => void
   setHomeLocation: (location: string, coords?: { lat: number; lng: number } | null) => void
@@ -52,6 +57,7 @@ type OnboardingContextValue = {
   setViewerGoals: (goals: string[]) => void
   setPendingFollows: (next: PendingFollows) => void
   setWantsNotifications: (next: boolean) => void
+  setOrgName: (next: string) => void
   // Marks onboarding done, whether the user finished every screen or hit
   // "Überspringen" partway through — both land the user in (tabs) as a
   // guest and never show onboarding again on this device.
@@ -72,6 +78,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const [viewerGoals, setViewerGoalsState] = useState<string[]>([])
   const [pendingFollows, setPendingFollowsState] = useState<PendingFollows>(EMPTY_PENDING_FOLLOWS)
   const [wantsNotifications, setWantsNotificationsState] = useState<boolean | null>(null)
+  const [orgName, setOrgNameState] = useState('')
 
   useEffect(() => {
     Promise.all([
@@ -83,7 +90,8 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       AsyncStorage.getItem(VIEWER_GOALS_KEY),
       AsyncStorage.getItem(PENDING_FOLLOW_KEY),
       AsyncStorage.getItem(WANTS_NOTIFICATIONS_KEY),
-    ]).then(([flag, storedRole, storedPersona, storedLocation, storedDisciplines, storedGoals, storedPending, storedWantsNotif]) => {
+      AsyncStorage.getItem(ORG_NAME_KEY),
+    ]).then(([flag, storedRole, storedPersona, storedLocation, storedDisciplines, storedGoals, storedPending, storedWantsNotif, storedOrgName]) => {
       setHasOnboarded(flag === 'true')
       if (storedRole) setRoleState(storedRole as Role)
       if (storedPersona) setPersonaState(storedPersona as Persona)
@@ -109,6 +117,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
         try { setPendingFollowsState(JSON.parse(storedPending)) } catch {}
       }
       if (storedWantsNotif) setWantsNotificationsState(storedWantsNotif === 'true')
+      if (storedOrgName) setOrgNameState(storedOrgName)
       setReady(true)
     })
   }, [])
@@ -150,6 +159,11 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     AsyncStorage.setItem(WANTS_NOTIFICATIONS_KEY, String(next))
   }
 
+  const setOrgName = (next: string) => {
+    setOrgNameState(next)
+    AsyncStorage.setItem(ORG_NAME_KEY, next)
+  }
+
   const finishOnboarding = async () => {
     await AsyncStorage.setItem(FLAG_KEY, 'true')
     setHasOnboarded(true)
@@ -159,9 +173,9 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     <OnboardingContext.Provider
       value={{
         ready, hasOnboarded, role, persona, homeLocation, homeLat, homeLng, disciplines, viewerGoals,
-        pendingFollows, wantsNotifications,
+        pendingFollows, wantsNotifications, orgName,
         setRole, setPersona, setHomeLocation, setDisciplines, setViewerGoals,
-        setPendingFollows, setWantsNotifications, finishOnboarding,
+        setPendingFollows, setWantsNotifications, setOrgName, finishOnboarding,
       }}
     >
       {children}

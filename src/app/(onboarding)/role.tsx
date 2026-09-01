@@ -37,7 +37,9 @@ export default function RoleScreen() {
     if (!card) return
     setPersona(card.persona)
     setRole(card.role)
-    router.push('/(onboarding)/location')
+    // Organizer gets its own next step — an org name and focus don't mean
+    // much for someone there to host events rather than discover them.
+    router.push(card.role === 'organizer' ? '/(onboarding)/organizer-info' : '/(onboarding)/location')
   }
 
   return (

@@ -27,13 +27,24 @@ export const TOTAL_STEPS: Record<FlowPersona | 'club', number> = {
   club: 3, // welcome, role, club-info — then real signup, not counted here
 }
 
-// The current main flow (Persona → Location → Follow → Permissions → real
-// signup) is uniform for all three personas — no per-persona branching, no
-// extra screens — unlike the FLOW map above, which only the older
-// viewer-goals/interests/experience/gym screens still use.
+// The viewer/club main flow (Persona → Location → Follow → Permissions →
+// real signup) — no per-persona branching between those two, unlike the
+// FLOW map above, which only the older viewer-goals/interests/experience/
+// gym screens still use.
 const MAIN_FLOW = ['role', 'location', 'follow', 'permissions'] as const
 export const MAIN_FLOW_TOTAL = MAIN_FLOW.length
 
 export function mainFlowStepNumber(screen: (typeof MAIN_FLOW)[number]): number {
   return MAIN_FLOW.indexOf(screen) + 1
+}
+
+// Organizer gets its own flow instead of the viewer-flavored Location/
+// Follow steps — an organization name and what they run in place of a
+// home city and a follow list, which don't mean much for someone there to
+// host events rather than discover them.
+const ORGANIZER_FLOW = ['role', 'organizer-info', 'organizer-focus', 'permissions'] as const
+export const ORGANIZER_FLOW_TOTAL = ORGANIZER_FLOW.length
+
+export function organizerFlowStepNumber(screen: (typeof ORGANIZER_FLOW)[number]): number {
+  return ORGANIZER_FLOW.indexOf(screen) + 1
 }

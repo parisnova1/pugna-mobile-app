@@ -12,6 +12,8 @@ export default function OnboardingLayout() {
       <Stack.Screen name="gym" />
       <Stack.Screen name="location" />
       <Stack.Screen name="follow" />
+      <Stack.Screen name="organizer-info" />
+      <Stack.Screen name="organizer-focus" />
       <Stack.Screen name="permissions" />
       <Stack.Screen name="ready" />
       <Stack.Screen name="club-info" />
