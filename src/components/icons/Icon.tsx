@@ -1,4 +1,5 @@
 import Svg, { Path, Circle, Ellipse, Rect, Line, Polygon } from 'react-native-svg'
+import { Ionicons } from '@expo/vector-icons'
 import { TEXT } from '@/theme'
 
 type Prim =
@@ -20,13 +21,13 @@ export type IconName =
   | 'flash' | 'shield' | 'personCircle' | 'statsChart' | 'logout'
   | 'bookmark' | 'share' | 'personAdd' | 'check' | 'pin'
 
-// Data-driven monochrome icon set (48x48, hero mark 160x160) — one shared
-// component instead of 19 near-identical SVG files, matching this redesign's
-// own "extract one primitive instead of N inline copies" principle. Every
-// icon uses `currentColor`-style semantics via the `color` prop so it always
-// inherits a real theme token (TEXT/ACCENT/ON_ACCENT), never a hardcoded hue —
-// this app's monochrome rule (see src/theme/index.ts) applies here too.
-const ICONS: Record<IconName, IconDef> = {
+// Only the glyphs Ionicons has no real equivalent for stay hand-drawn: the
+// brand mark and combat-sport-specific shapes (glove, whistle, ring, kick,
+// octagon, belt, elbow, clinch, tournament bracket). Every generic UI glyph
+// (nav chrome, actions, chips) now renders through Ionicons' outline/sharp
+// pair instead — see the `filled` prop on Icon() below — for a crisper,
+// more current look than this file's original all-hand-drawn set.
+const ICONS: Record<'hero' | 'glove' | 'whistle' | 'ring' | 'kick' | 'octagon' | 'belt' | 'elbow' | 'clinch' | 'broadcast' | 'bracket', IconDef> = {
   hero: {
     viewBox: '0 0 160 160',
     prims: [
@@ -72,29 +73,11 @@ const ICONS: Record<IconName, IconDef> = {
       { t: 'line', x1: 40, y1: 10, x2: 8, y2: 38 },
     ],
   },
-  eye: {
-    viewBox: '0 0 48 48',
-    prims: [
-      { t: 'path', d: 'M6 24 Q24 8 42 24 Q24 40 6 24 Z' },
-      { t: 'circle', cx: 24, cy: 24, r: 7 },
-      { t: 'circle', cx: 26.5, cy: 21.5, r: 2, fill: true },
-    ],
-  },
-  clipboard: {
-    viewBox: '0 0 48 48',
-    prims: [
-      { t: 'rect', x: 10, y: 8, w: 28, h: 34, rx: 3 },
-      { t: 'rect', x: 18, y: 4, w: 12, h: 8, rx: 2 },
-      { t: 'line', x1: 15, y1: 21, x2: 26, y2: 21 },
-      { t: 'path', d: 'M15 33 L18 36 L24 30' },
-      { t: 'line', x1: 15, y1: 27, x2: 30, y2: 27 },
-    ],
-  },
   kick: {
     viewBox: '0 0 48 48',
     prims: [
       { t: 'path', d: 'M10 10 L24 26 L36 18' },
-      { t: 'rect', x: 33, y: 14, w: 10, h: 7, rx: 3 },
+      { t: 'rect', x: 33, y: 14, w: 10, h: 7, rx: 2 },
     ],
   },
   octagon: {
@@ -104,7 +87,7 @@ const ICONS: Record<IconName, IconDef> = {
   belt: {
     viewBox: '0 0 48 48',
     prims: [
-      { t: 'rect', x: 8, y: 21, w: 32, h: 7, rx: 3.5 },
+      { t: 'rect', x: 8, y: 21, w: 32, h: 7, rx: 2 },
       { t: 'circle', cx: 24, cy: 24.5, r: 6 },
       { t: 'line', x1: 20, y1: 30, x2: 15, y2: 40 },
       { t: 'line', x1: 28, y1: 30, x2: 33, y2: 40 },
@@ -120,8 +103,8 @@ const ICONS: Record<IconName, IconDef> = {
   clinch: {
     viewBox: '0 0 48 48',
     prims: [
-      { t: 'rect', x: 6, y: 20, w: 30, h: 9, rx: 4.5, transform: 'rotate(-20 21 24.5)' },
-      { t: 'rect', x: 12, y: 20, w: 30, h: 9, rx: 4.5, transform: 'rotate(20 27 24.5)' },
+      { t: 'rect', x: 6, y: 20, w: 30, h: 9, rx: 2, transform: 'rotate(-20 21 24.5)' },
+      { t: 'rect', x: 12, y: 20, w: 30, h: 9, rx: 2, transform: 'rotate(20 27 24.5)' },
     ],
   },
   broadcast: {
@@ -142,200 +125,63 @@ const ICONS: Record<IconName, IconDef> = {
       { t: 'path', d: 'M36 13 L36 20 L24 20' },
     ],
   },
-  bell: {
-    viewBox: '0 0 48 48',
-    prims: [
-      { t: 'path', d: 'M14 28 L14 18 Q14 9 24 9 Q34 9 34 18 L34 28' },
-      { t: 'line', x1: 10, y1: 28, x2: 38, y2: 28 },
-      { t: 'circle', cx: 24, cy: 5, r: 2, fill: true },
-      { t: 'path', d: 'M20 32 Q24 37 28 32' },
-    ],
-  },
-  calendarMark: {
-    viewBox: '0 0 48 48',
-    prims: [
-      { t: 'rect', x: 7, y: 10, w: 34, h: 30, rx: 4 },
-      { t: 'line', x1: 7, y1: 19, x2: 41, y2: 19 },
-      { t: 'line', x1: 15, y1: 5, x2: 15, y2: 13 },
-      { t: 'line', x1: 33, y1: 5, x2: 33, y2: 13 },
-      { t: 'circle', cx: 24, cy: 29, r: 3, fill: true },
-    ],
-  },
-  followPerson: {
-    viewBox: '0 0 48 48',
-    prims: [
-      { t: 'circle', cx: 17, cy: 14, r: 7 },
-      { t: 'path', d: 'M5 38 Q5 25 17 25 Q29 25 29 38' },
-      { t: 'circle', cx: 36, cy: 12, r: 7 },
-      { t: 'line', x1: 36, y1: 8, x2: 36, y2: 16 },
-      { t: 'line', x1: 32, y1: 12, x2: 40, y2: 12 },
-    ],
-  },
-  followClub: {
-    viewBox: '0 0 48 48',
-    prims: [
-      { t: 'rect', x: 5, y: 18, w: 24, h: 20, rx: 2 },
-      { t: 'rect', x: 10, y: 23, w: 4, h: 4, fill: true },
-      { t: 'rect', x: 20, y: 23, w: 4, h: 4, fill: true },
-      { t: 'rect', x: 10, y: 31, w: 4, h: 4, fill: true },
-      { t: 'rect', x: 20, y: 31, w: 4, h: 4, fill: true },
-      { t: 'circle', cx: 37, cy: 13, r: 7 },
-      { t: 'line', x1: 37, y1: 9, x2: 37, y2: 17 },
-      { t: 'line', x1: 33, y1: 13, x2: 41, y2: 13 },
-    ],
-  },
-  scan: {
-    viewBox: '0 0 48 48',
-    prims: [
-      { t: 'path', d: 'M8 16 V8 H16' },
-      { t: 'path', d: 'M32 8 H40 V16' },
-      { t: 'path', d: 'M40 32 V40 H32' },
-      { t: 'path', d: 'M16 40 H8 V32' },
-      { t: 'circle', cx: 24, cy: 24, r: 5 },
-    ],
-  },
-  calendarCheck: {
-    viewBox: '0 0 48 48',
-    prims: [
-      { t: 'rect', x: 7, y: 10, w: 34, h: 30, rx: 4 },
-      { t: 'line', x1: 7, y1: 19, x2: 41, y2: 19 },
-      { t: 'line', x1: 15, y1: 5, x2: 15, y2: 13 },
-      { t: 'line', x1: 33, y1: 5, x2: 33, y2: 13 },
-      { t: 'path', d: 'M17 29 L22 34 L32 24' },
-    ],
-  },
-  settings: {
-    viewBox: '0 0 48 48',
-    prims: [
-      { t: 'circle', cx: 24, cy: 24, r: 8 },
-      { t: 'circle', cx: 24, cy: 24, r: 3, fill: true },
-      { t: 'line', x1: 24, y1: 4, x2: 24, y2: 12 },
-      { t: 'line', x1: 24, y1: 36, x2: 24, y2: 44 },
-      { t: 'line', x1: 4, y1: 24, x2: 12, y2: 24 },
-      { t: 'line', x1: 36, y1: 24, x2: 44, y2: 24 },
-      { t: 'line', x1: 10, y1: 10, x2: 15.5, y2: 15.5 },
-      { t: 'line', x1: 32.5, y1: 32.5, x2: 38, y2: 38 },
-      { t: 'line', x1: 38, y1: 10, x2: 32.5, y2: 15.5 },
-      { t: 'line', x1: 15.5, y1: 32.5, x2: 10, y2: 38 },
-    ],
-  },
-  bellOff: {
-    viewBox: '0 0 48 48',
-    prims: [
-      { t: 'path', d: 'M14 28 L14 18 Q14 9 24 9 Q34 9 34 18 L34 28' },
-      { t: 'line', x1: 10, y1: 28, x2: 38, y2: 28 },
-      { t: 'circle', cx: 24, cy: 5, r: 2, fill: true },
-      { t: 'path', d: 'M20 32 Q24 37 28 32' },
-      { t: 'line', x1: 8, y1: 8, x2: 40, y2: 40 },
-    ],
-  },
-  // Generic UI chrome icons — same thin-line 48x48 geometric style as the
-  // combat-sport set above, added to replace the mismatched filled/rounded
-  // Ionicons this app previously borrowed for nav chrome, actions, and tab
-  // bars (see the boxing-sprint plan's Slice 10 mobile Liquid Glass rollout).
-  close: {
-    viewBox: '0 0 48 48',
-    prims: [
-      { t: 'line', x1: 12, y1: 12, x2: 36, y2: 36 },
-      { t: 'line', x1: 36, y1: 12, x2: 12, y2: 36 },
-    ],
-  },
-  chevronBack: { viewBox: '0 0 48 48', prims: [{ t: 'path', d: 'M28 10 L16 24 L28 38' }] },
-  chevronForward: { viewBox: '0 0 48 48', prims: [{ t: 'path', d: 'M20 10 L32 24 L20 38' }] },
-  arrowForward: {
-    viewBox: '0 0 48 48',
-    prims: [
-      { t: 'line', x1: 8, y1: 24, x2: 38, y2: 24 },
-      { t: 'path', d: 'M27 13 L38 24 L27 35' },
-    ],
-  },
-  search: {
-    viewBox: '0 0 48 48',
-    prims: [
-      { t: 'circle', cx: 21, cy: 21, r: 12 },
-      { t: 'line', x1: 30, y1: 30, x2: 41, y2: 41 },
-    ],
-  },
-  flash: {
-    viewBox: '0 0 48 48',
-    prims: [{ t: 'polygon', points: '26,4 12,26 22,26 18,44 38,18 26,18' }],
-  },
-  shield: {
-    viewBox: '0 0 48 48',
-    prims: [{ t: 'path', d: 'M24 4 L40 10 L40 21 Q40 36 24 44 Q8 36 8 21 L8 10 Z' }],
-  },
-  personCircle: {
-    viewBox: '0 0 48 48',
-    prims: [
-      { t: 'circle', cx: 24, cy: 24, r: 18 },
-      { t: 'circle', cx: 24, cy: 19, r: 6 },
-      { t: 'path', d: 'M13 37 Q13 28 24 28 Q35 28 35 37' },
-    ],
-  },
-  statsChart: {
-    viewBox: '0 0 48 48',
-    prims: [
-      { t: 'rect', x: 7, y: 24, w: 8, h: 16, rx: 2, fill: true },
-      { t: 'rect', x: 20, y: 12, w: 8, h: 28, rx: 2, fill: true },
-      { t: 'rect', x: 33, y: 30, w: 8, h: 10, rx: 2, fill: true },
-    ],
-  },
-  logout: {
-    viewBox: '0 0 48 48',
-    prims: [
-      { t: 'rect', x: 8, y: 8, w: 18, h: 32, rx: 3 },
-      { t: 'line', x1: 20, y1: 24, x2: 41, y2: 24 },
-      { t: 'path', d: 'M32 15 L41 24 L32 33' },
-    ],
-  },
-  bookmark: {
-    viewBox: '0 0 48 48',
-    prims: [{ t: 'path', d: 'M14 6 H34 V42 L24 33 L14 42 Z' }],
-  },
-  share: {
-    viewBox: '0 0 48 48',
-    prims: [
-      { t: 'line', x1: 24, y1: 6, x2: 24, y2: 28 },
-      { t: 'path', d: 'M16 14 L24 6 L32 14' },
-      { t: 'path', d: 'M10 22 V38 Q10 40 12 40 H36 Q38 40 38 38 V22' },
-    ],
-  },
-  personAdd: {
-    viewBox: '0 0 48 48',
-    prims: [
-      { t: 'circle', cx: 18, cy: 16, r: 8 },
-      { t: 'path', d: 'M4 40 Q4 27 18 27 Q26 27 29 33' },
-      { t: 'line', x1: 37, y1: 22, x2: 37, y2: 34 },
-      { t: 'line', x1: 31, y1: 28, x2: 43, y2: 28 },
-    ],
-  },
-  check: { viewBox: '0 0 48 48', prims: [{ t: 'path', d: 'M10 25 L20 35 L38 13' }] },
-  pin: {
-    viewBox: '0 0 48 48',
-    prims: [
-      { t: 'path', d: 'M24 4 C13 4 5 12 5 22 C5 34 24 44 24 44 C24 44 43 34 43 22 C43 12 35 4 24 4 Z' },
-      { t: 'circle', cx: 24, cy: 21, r: 6 },
-    ],
-  },
+}
+
+// Maps every non-hand-drawn IconName onto an Ionicons base glyph name —
+// suffixed with '-outline' (default) or '-sharp' (filled=true) at render
+// time, see Icon() below.
+const IONICONS_MAP: Record<Exclude<IconName, keyof typeof ICONS>, string> = {
+  eye: 'eye',
+  clipboard: 'clipboard',
+  bell: 'notifications',
+  bellOff: 'notifications-off',
+  calendarMark: 'calendar',
+  followPerson: 'people',
+  followClub: 'business',
+  scan: 'scan',
+  calendarCheck: 'calendar',
+  settings: 'settings',
+  close: 'close',
+  chevronBack: 'chevron-back',
+  chevronForward: 'chevron-forward',
+  arrowForward: 'arrow-forward',
+  search: 'search',
+  flash: 'flash',
+  shield: 'shield',
+  personCircle: 'person-circle',
+  statsChart: 'stats-chart',
+  logout: 'log-out',
+  bookmark: 'bookmark',
+  share: 'share',
+  personAdd: 'person-add',
+  check: 'checkmark',
+  pin: 'location',
 }
 
 export function Icon({
   name,
   size = 24,
   color = TEXT,
-  strokeWidth = 2.6,
+  strokeWidth = 2.2,
   filled,
 }: {
   name: IconName
   size?: number
   color?: string
   strokeWidth?: number
-  // Renders every primitive solid instead of outlined — for icons with a
-  // meaningful on/off state (a saved bookmark, an active toggle) rather than
-  // drawing a second icon definition for the filled variant.
+  // Hand-drawn set: solid fill instead of outline. Ionicons set: the bold,
+  // sharp-cornered '-sharp' variant instead of the default thin outline —
+  // used for active/selected/emphasized states (an active tab, a saved
+  // bookmark, a selected persona card) rather than a second icon definition.
   filled?: boolean
 }) {
-  const def = ICONS[name]
+  if (name in IONICONS_MAP) {
+    const base = IONICONS_MAP[name as Exclude<IconName, keyof typeof ICONS>]
+    const ioniconsName = `${base}-${filled ? 'sharp' : 'outline'}` as keyof typeof Ionicons.glyphMap
+    return <Ionicons name={ioniconsName} size={size} color={color} />
+  }
+
+  const def = ICONS[name as keyof typeof ICONS]
   return (
     <Svg width={size} height={size} viewBox={def.viewBox} fill="none">
       {def.prims.map((p, i) => {
