@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { View, Text, TextInput, FlatList, Pressable, StyleSheet, Modal, ScrollView } from 'react-native'
+import { View, Text, TextInput, FlatList, Pressable, StyleSheet, Modal, ScrollView, Alert } from 'react-native'
 import { router } from 'expo-router'
 import { apiFetch } from '@/lib/api'
 import { formatDisplayDate } from '@/lib/date'
@@ -43,6 +43,25 @@ function OrganizerEventsInner() {
     }
   }
 
+  const remove = (ev: OrganizerEvent) => {
+    Alert.alert(t('organizer.events.deleteConfirmTitle'), t('organizer.events.deleteConfirmBody'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('common.delete'),
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await apiFetch(`/api/events/${ev.id}`, { method: 'DELETE' })
+            setLoading(true)
+            load()
+          } catch {
+            /* leave list unchanged on failure */
+          }
+        },
+      },
+    ])
+  }
+
   return (
     <Screen>
       <View style={styles.header}>
@@ -67,6 +86,7 @@ function OrganizerEventsInner() {
                 <Button label={t('organizer.events.manage')} onPress={() => router.push(`/organizer-events/${ev.id}`)} style={styles.actionButton} />
                 <Button label={t('common.edit')} variant="outline" onPress={() => setFormTarget(ev)} style={styles.actionButton} />
                 <Button label={t('organizer.events.duplicate')} variant="outline" onPress={() => duplicate(ev.id)} style={styles.actionButton} />
+                <Button label={t('common.delete')} variant="outline" onPress={() => remove(ev)} style={styles.actionButton} />
               </View>
             </View>
           )}
@@ -171,10 +191,12 @@ export function EventFormModal({ event, onCancel, onSaved }: { event: OrganizerE
             </Field>
 
             <Field label={t('organizer.eventForm.status')}>
-              <View style={{ flexDirection: 'row', gap: 8 }}>
-                {(['Draft', 'Active'] as const).map(s => (
-                  <Pressable key={s} onPress={() => setStatus(s)} style={[styles.pill, { flex: 1 }, status === s && styles.pillActive]}>
-                    <Text style={[styles.pillLabel, status === s && styles.pillLabelActive]}>{s === 'Draft' ? t('organizer.eventForm.statusDraft') : t('organizer.eventForm.statusActive')}</Text>
+              <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
+                {(['Draft', 'Open', 'Active'] as const).map(s => (
+                  <Pressable key={s} onPress={() => setStatus(s)} style={[styles.pill, { flexGrow: 1 }, status === s && styles.pillActive]}>
+                    <Text style={[styles.pillLabel, status === s && styles.pillLabelActive]}>
+                      {s === 'Draft' ? t('organizer.eventForm.statusDraft') : s === 'Open' ? t('organizer.eventForm.statusOpen') : t('organizer.eventForm.statusActive')}
+                    </Text>
                   </Pressable>
                 ))}
               </View>

@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
-import { View, Text, ScrollView, Pressable, StyleSheet, Modal, TextInput } from 'react-native'
-import { useLocalSearchParams } from 'expo-router'
+import { View, Text, ScrollView, Pressable, StyleSheet, Modal, TextInput, Alert } from 'react-native'
+import { useLocalSearchParams, router } from 'expo-router'
 import { apiFetch } from '@/lib/api'
 import { formatDisplayDate } from '@/lib/date'
 import { useLanguage } from '@/i18n/LanguageContext'
@@ -55,6 +55,24 @@ function ManageEventInner() {
 
   useEffect(() => { load() }, [load])
 
+  const remove = () => {
+    Alert.alert(t('organizer.events.deleteConfirmTitle'), t('organizer.events.deleteConfirmBody'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('common.delete'),
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await apiFetch(`/api/events/${id}`, { method: 'DELETE' })
+            router.replace('/organizer/events')
+          } catch {
+            /* stay on the manage screen on failure */
+          }
+        },
+      },
+    ])
+  }
+
   if (loading) return <Screen><View style={styles.centerFill}><Spinner /></View></Screen>
   if (!event) return <Screen><View style={styles.centerFill}><Text style={styles.notFound}>Event not found.</Text></View></Screen>
 
@@ -67,7 +85,10 @@ function ManageEventInner() {
           <BackButton />
           <View style={styles.heroTopRow}>
             <Text style={styles.eyebrow}>{event.discipline} · {formatDisplayDate(event.date)}</Text>
-            <Pressable onPress={() => setEditingEvent(true)}><Text style={styles.editLink}>{t('organizer.manage.editEvent')}</Text></Pressable>
+            <View style={{ flexDirection: 'row', gap: 16 }}>
+              <Pressable onPress={() => setEditingEvent(true)}><Text style={styles.editLink}>{t('organizer.manage.editEvent')}</Text></Pressable>
+              <Pressable onPress={remove}><Text style={styles.deleteLink}>{t('common.delete')}</Text></Pressable>
+            </View>
           </View>
           <Text style={styles.title}>{event.name}</Text>
           <Text style={styles.meta}>{event.location} · {event.status}</Text>
@@ -159,10 +180,12 @@ function EditEventModal({ event, onCancel, onSaved }: { event: EventInfo; onCanc
               </View>
             )}
             <Field label={t('organizer.eventForm.status')}>
-              <View style={{ flexDirection: 'row', gap: 8 }}>
-                {(['Draft', 'Active'] as const).map(s => (
-                  <Pressable key={s} onPress={() => setStatus(s)} style={[styles.pill, { flex: 1 }, status === s && styles.pillActive]}>
-                    <Text style={[styles.pillLabel, status === s && styles.pillLabelActive]}>{s === 'Draft' ? t('organizer.eventForm.statusDraft') : t('organizer.eventForm.statusActive')}</Text>
+              <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
+                {(['Draft', 'Open', 'Active'] as const).map(s => (
+                  <Pressable key={s} onPress={() => setStatus(s)} style={[styles.pill, { flexGrow: 1 }, status === s && styles.pillActive]}>
+                    <Text style={[styles.pillLabel, status === s && styles.pillLabelActive]}>
+                      {s === 'Draft' ? t('organizer.eventForm.statusDraft') : s === 'Open' ? t('organizer.eventForm.statusOpen') : t('organizer.eventForm.statusActive')}
+                    </Text>
                   </Pressable>
                 ))}
               </View>
