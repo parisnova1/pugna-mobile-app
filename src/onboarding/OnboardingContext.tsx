@@ -8,7 +8,6 @@ const LOCATION_KEY = 'pugna:onboarding:location'
 const DISCIPLINES_KEY = 'pugna:onboarding:disciplines'
 const PERSONA_KEY = 'pugna:onboarding:persona'
 const VIEWER_GOALS_KEY = 'pugna:onboarding:viewerGoals'
-const PENDING_FOLLOW_KEY = 'pugna:onboarding:pendingFollows'
 const WANTS_NOTIFICATIONS_KEY = 'pugna:onboarding:wantsNotifications'
 const ORG_NAME_KEY = 'pugna:onboarding:orgName'
 
@@ -21,13 +20,6 @@ const ORG_NAME_KEY = 'pugna:onboarding:orgName'
 // (Verein). Distinct from `role` (the real backend enum) because the
 // backend has no concept of athlete/coach — both map to role 'viewer'.
 export type Persona = 'athlete' | 'coach' | 'club' | 'fan' | 'organizer'
-
-// A club/fighter/event picked on the Follow step before the user has an
-// account (Follow happens before Account in the current flow — see
-// (onboarding)/follow.tsx). Applied for real via the follow/save APIs right
-// after signup succeeds, then cleared.
-export type PendingFollows = { fighterIds: number[]; clubIds: number[]; eventIds: number[] }
-const EMPTY_PENDING_FOLLOWS: PendingFollows = { fighterIds: [], clubIds: [], eventIds: [] }
 
 type OnboardingContextValue = {
   // false until the AsyncStorage read resolves — callers must wait for this
@@ -42,7 +34,6 @@ type OnboardingContextValue = {
   homeLng: number | null
   disciplines: string[]
   viewerGoals: string[]
-  pendingFollows: PendingFollows
   // null = no choice made yet on the Permissions primer; true/false once the
   // user has pressed either "Fight-Alerts aktivieren" or "Jetzt nicht".
   wantsNotifications: boolean | null
@@ -55,7 +46,6 @@ type OnboardingContextValue = {
   setHomeLocation: (location: string, coords?: { lat: number; lng: number } | null) => void
   setDisciplines: (disciplines: string[]) => void
   setViewerGoals: (goals: string[]) => void
-  setPendingFollows: (next: PendingFollows) => void
   setWantsNotifications: (next: boolean) => void
   setOrgName: (next: string) => void
   // Marks onboarding done, whether the user finished every screen or hit
@@ -76,7 +66,6 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const [homeLng, setHomeLng] = useState<number | null>(null)
   const [disciplines, setDisciplinesState] = useState<string[]>([])
   const [viewerGoals, setViewerGoalsState] = useState<string[]>([])
-  const [pendingFollows, setPendingFollowsState] = useState<PendingFollows>(EMPTY_PENDING_FOLLOWS)
   const [wantsNotifications, setWantsNotificationsState] = useState<boolean | null>(null)
   const [orgName, setOrgNameState] = useState('')
 
@@ -88,10 +77,9 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       AsyncStorage.getItem(LOCATION_KEY),
       AsyncStorage.getItem(DISCIPLINES_KEY),
       AsyncStorage.getItem(VIEWER_GOALS_KEY),
-      AsyncStorage.getItem(PENDING_FOLLOW_KEY),
       AsyncStorage.getItem(WANTS_NOTIFICATIONS_KEY),
       AsyncStorage.getItem(ORG_NAME_KEY),
-    ]).then(([flag, storedRole, storedPersona, storedLocation, storedDisciplines, storedGoals, storedPending, storedWantsNotif, storedOrgName]) => {
+    ]).then(([flag, storedRole, storedPersona, storedLocation, storedDisciplines, storedGoals, storedWantsNotif, storedOrgName]) => {
       setHasOnboarded(flag === 'true')
       if (storedRole) setRoleState(storedRole as Role)
       if (storedPersona) setPersonaState(storedPersona as Persona)
@@ -112,9 +100,6 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       }
       if (storedGoals) {
         try { setViewerGoalsState(JSON.parse(storedGoals)) } catch {}
-      }
-      if (storedPending) {
-        try { setPendingFollowsState(JSON.parse(storedPending)) } catch {}
       }
       if (storedWantsNotif) setWantsNotificationsState(storedWantsNotif === 'true')
       if (storedOrgName) setOrgNameState(storedOrgName)
@@ -149,11 +134,6 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     AsyncStorage.setItem(VIEWER_GOALS_KEY, JSON.stringify(next))
   }
 
-  const setPendingFollows = (next: PendingFollows) => {
-    setPendingFollowsState(next)
-    AsyncStorage.setItem(PENDING_FOLLOW_KEY, JSON.stringify(next))
-  }
-
   const setWantsNotifications = (next: boolean) => {
     setWantsNotificationsState(next)
     AsyncStorage.setItem(WANTS_NOTIFICATIONS_KEY, String(next))
@@ -173,9 +153,9 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     <OnboardingContext.Provider
       value={{
         ready, hasOnboarded, role, persona, homeLocation, homeLat, homeLng, disciplines, viewerGoals,
-        pendingFollows, wantsNotifications, orgName,
+        wantsNotifications, orgName,
         setRole, setPersona, setHomeLocation, setDisciplines, setViewerGoals,
-        setPendingFollows, setWantsNotifications, setOrgName, finishOnboarding,
+        setWantsNotifications, setOrgName, finishOnboarding,
       }}
     >
       {children}

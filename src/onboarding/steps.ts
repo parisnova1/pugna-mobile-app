@@ -27,11 +27,12 @@ export const TOTAL_STEPS: Record<FlowPersona | 'club', number> = {
   club: 3, // welcome, role, club-info — then real signup, not counted here
 }
 
-// The viewer/club main flow (Persona → Location → Follow → Permissions →
-// real signup) — no per-persona branching between those two, unlike the
-// FLOW map above, which only the older viewer-goals/interests/experience/
-// gym screens still use.
-const MAIN_FLOW = ['role', 'location', 'follow', 'permissions'] as const
+// The viewer/club main flow (Persona → Location → Permissions → real
+// signup) — no per-persona branching between those two, unlike the FLOW
+// map above, which only the older viewer-goals/interests/experience/gym
+// screens still use. Follow isn't part of this count — it runs after
+// signup succeeds (see (onboarding)/follow.tsx), not before it.
+const MAIN_FLOW = ['role', 'location', 'permissions'] as const
 export const MAIN_FLOW_TOTAL = MAIN_FLOW.length
 
 export function mainFlowStepNumber(screen: (typeof MAIN_FLOW)[number]): number {

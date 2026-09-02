@@ -15,27 +15,25 @@ import { ACCENT, TEXT, BORDER, MUTED, BG, INPUT_BG, FONT_DISPLAY_BOLD, FONT_BODY
 
 const ROLES: Role[] = ['viewer', 'club', 'organizer']
 
-// Applies whatever was picked pre-account (Follow's local selections, the
-// Permissions primer's notification intent) via the real APIs now that a
-// session finally exists, then clears them — best-effort, a failure here
-// shouldn't block landing on the new account's home screen.
-async function applyPendingOnboardingState(
-  pendingFollows: { fighterIds: number[]; clubIds: number[]; eventIds: number[] },
-  wantsNotifications: boolean | null,
-) {
-  const follows = [
-    ...pendingFollows.fighterIds.map(id => apiFetch(`/api/public/fighters/${id}/follow`, { method: 'POST' })),
-    ...pendingFollows.clubIds.map(id => apiFetch(`/api/clubs/${id}/follow`, { method: 'POST' })),
-    ...pendingFollows.eventIds.map(id => apiFetch(`/api/public/events/${id}/save`, { method: 'POST' })),
-  ]
-  await Promise.allSettled(follows)
+// Applies the Permissions primer's notification intent via the real
+// settings API now that a session finally exists — there was no session to
+// PATCH against back when that choice was made. Best-effort; a failure
+// here shouldn't block landing on the new account.
+async function applyNotificationPreference(wantsNotifications: boolean | null) {
+  if (wantsNotifications === null) return
+  const categories = Object.fromEntries(
+    ['event.live', 'bout.result', 'event.stream', 'nomination.accepted', 'nomination.injured'].map(k => [k, wantsNotifications]),
+  )
+  await apiFetch('/api/notifications/settings', { method: 'PATCH', body: JSON.stringify({ categories }) }).catch(() => {})
+}
 
-  if (wantsNotifications !== null) {
-    const categories = Object.fromEntries(
-      ['event.live', 'bout.result', 'event.stream', 'nomination.accepted', 'nomination.injured'].map(k => [k, wantsNotifications]),
-    )
-    await apiFetch('/api/notifications/settings', { method: 'PATCH', body: JSON.stringify({ categories }) }).catch(() => {})
-  }
+// Viewer/club land on Follow next — a real, immediate action now that
+// there's an account to attach it to (see (onboarding)/follow.tsx, which
+// also finishes onboarding and routes home itself). Organizer's flow never
+// had a Follow step, so it goes straight home.
+function nextRoute(role: Role): '/(onboarding)/follow' | '/organizer' | '/club-admin' | '/' {
+  if (role === 'organizer') return roleHomePath(role)
+  return '/(onboarding)/follow'
 }
 
 export default function SignupScreen() {
@@ -43,7 +41,7 @@ export default function SignupScreen() {
   const { t } = useLanguage()
   const {
     role: onboardingRole, disciplines, homeLocation: onboardingLocation, homeLat, homeLng, orgName,
-    pendingFollows, wantsNotifications, setPendingFollows, finishOnboarding,
+    wantsNotifications, finishOnboarding,
   } = useOnboarding()
   const params = useLocalSearchParams<{ role?: string; name?: string }>()
   // Persona (onboarding/role.tsx) is the source of truth now that it sets
@@ -81,10 +79,9 @@ export default function SignupScreen() {
           body: JSON.stringify({ disciplines, location: homeLocation, lat: homeLat, lng: homeLng }),
         }).catch(() => {})
       }
-      await applyPendingOnboardingState(pendingFollows, wantsNotifications)
-      setPendingFollows({ fighterIds: [], clubIds: [], eventIds: [] })
+      await applyNotificationPreference(wantsNotifications)
       await finishOnboarding()
-      router.replace(roleHomePath(newUser.role))
+      router.replace(nextRoute(newUser.role))
     } catch (err) {
       setError(err instanceof Error ? err.message : t('login.errorGeneric'))
     } finally {
@@ -113,11 +110,8 @@ export default function SignupScreen() {
             homeLocation={homeLocation}
             uppercase={false}
             onSuccess={newUser => {
-              applyPendingOnboardingState(pendingFollows, wantsNotifications).finally(() => {
-                setPendingFollows({ fighterIds: [], clubIds: [], eventIds: [] })
-                finishOnboarding()
-              })
-              router.replace(roleHomePath(newUser.role))
+              applyNotificationPreference(wantsNotifications).finally(() => finishOnboarding())
+              router.replace(nextRoute(newUser.role))
             }}
             onError={setError}
           />

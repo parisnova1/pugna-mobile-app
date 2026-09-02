@@ -27,7 +27,7 @@ export default function LocationScreen() {
   // whenever homeLocation is still empty at account-creation time).
   const submit = () => {
     setHomeLocation(value.trim(), coords)
-    router.push('/(onboarding)/follow')
+    router.push('/(onboarding)/permissions')
   }
 
   const useCurrentLocation = async () => {

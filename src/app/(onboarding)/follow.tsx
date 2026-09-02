@@ -1,19 +1,18 @@
 import { useEffect, useState } from 'react'
 import { View, Text, Pressable, FlatList, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
+import { useAuth } from '@/auth/AuthContext'
 import { useOnboarding } from '@/onboarding/OnboardingContext'
 import { useLanguage } from '@/i18n/LanguageContext'
 import { apiFetch } from '@/lib/api'
 import { formatDisplayDate } from '@/lib/date'
+import { roleHomePath } from '@/lib/roleHome'
 import Screen from '@/components/Screen'
 import CenteredColumn from '@/components/CenteredColumn'
 import Card from '@/components/Card'
 import Button from '@/components/Button'
 import Spinner from '@/components/Spinner'
 import EmptyState from '@/components/EmptyState'
-import BackLink from '@/onboarding/BackLink'
-import StepIndicator from '@/onboarding/StepIndicator'
-import { mainFlowStepNumber, MAIN_FLOW_TOTAL } from '@/onboarding/steps'
 import { ACCENT, ON_ACCENT, TEXT, MUTED, BORDER, FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_BODY } from '@/theme'
 
 type Fighter = { id: number; name: string; discipline: string; weight: string; club: string }
@@ -21,21 +20,29 @@ type Club = { id: number; name: string; location: string }
 type PublicEvent = { id: number; name: string; date: string; location: string }
 type TabKey = 'fighters' | 'clubs' | 'events'
 
-// Follow runs before Account in the current flow, so there's no session to
-// call the follow/save APIs against yet — picks are stored locally
-// (OnboardingContext.pendingFollows) and applied for real via those same
-// APIs right after signup succeeds (see (auth)/signup.tsx).
+// The last onboarding screen, reached only right after Account succeeds
+// (see (auth)/signup.tsx) — deliberately after signup, not before: asking
+// someone to follow clubs/fighters before they have an account to attach
+// those follows to doesn't hold together. Calls the real follow/save APIs
+// directly, same as the rest of the app.
 export default function FollowScreen() {
   const { t } = useLanguage()
-  const { homeLat, homeLng, pendingFollows, setPendingFollows } = useOnboarding()
+  const { user } = useAuth()
+  const { homeLat, homeLng } = useOnboarding()
   const [tab, setTab] = useState<TabKey>('fighters')
   const [fighters, setFighters] = useState<Fighter[]>([])
   const [clubs, setClubs] = useState<Club[]>([])
   const [events, setEvents] = useState<PublicEvent[]>([])
-  const [followedFighters, setFollowedFighters] = useState<Set<number>>(new Set(pendingFollows.fighterIds))
-  const [followedClubs, setFollowedClubs] = useState<Set<number>>(new Set(pendingFollows.clubIds))
-  const [savedEvents, setSavedEvents] = useState<Set<number>>(new Set(pendingFollows.eventIds))
+  const [followedFighters, setFollowedFighters] = useState<Set<number>>(new Set())
+  const [followedClubs, setFollowedClubs] = useState<Set<number>>(new Set())
+  const [savedEvents, setSavedEvents] = useState<Set<number>>(new Set())
   const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    // Shouldn't normally happen — signup only routes here on success — but
+    // covers a stray direct navigation/refresh with no session.
+    if (!user) router.replace('/(auth)/login')
+  }, [user])
 
   useEffect(() => {
     const clubsQuery = homeLat != null && homeLng != null ? `?lat=${homeLat}&lng=${homeLng}&radiusKm=100` : ''
@@ -46,41 +53,39 @@ export default function FollowScreen() {
     ]).finally(() => setLoading(false))
   }, [homeLat, homeLng])
 
-  const toggleFighter = (id: number) => {
+  const toggleFighter = async (id: number) => {
+    const already = followedFighters.has(id)
     setFollowedFighters(prev => {
       const next = new Set(prev)
-      next.has(id) ? next.delete(id) : next.add(id)
+      already ? next.delete(id) : next.add(id)
       return next
     })
+    await apiFetch(`/api/public/fighters/${id}/follow`, { method: already ? 'DELETE' : 'POST' }).catch(() => {})
   }
 
-  const toggleClub = (id: number) => {
+  const toggleClub = async (id: number) => {
+    const already = followedClubs.has(id)
     setFollowedClubs(prev => {
       const next = new Set(prev)
-      next.has(id) ? next.delete(id) : next.add(id)
+      already ? next.delete(id) : next.add(id)
       return next
     })
+    await apiFetch(`/api/clubs/${id}/follow`, { method: already ? 'DELETE' : 'POST' }).catch(() => {})
   }
 
-  const toggleEvent = (id: number) => {
+  const toggleEvent = async (id: number) => {
+    const already = savedEvents.has(id)
     setSavedEvents(prev => {
       const next = new Set(prev)
-      next.has(id) ? next.delete(id) : next.add(id)
+      already ? next.delete(id) : next.add(id)
       return next
     })
+    await apiFetch(`/api/public/events/${id}/save`, { method: already ? 'DELETE' : 'POST' }).catch(() => {})
   }
 
-  // Weiter and Überspringen are the same action — this step is optional
-  // either way, the second button just reassures anyone who hasn't picked
-  // anything yet that they don't have to.
-  const advance = () => {
-    setPendingFollows({
-      fighterIds: [...followedFighters],
-      clubIds: [...followedClubs],
-      eventIds: [...savedEvents],
-    })
-    router.push('/(onboarding)/permissions')
-  }
+  // Weiter and Überspringen are the same action — every pick already saved
+  // itself the moment it was tapped, so there's nothing left to commit.
+  const finish = () => router.replace(user ? roleHomePath(user.role) : '/')
 
   const TABS: { key: TabKey; labelKey: 'onboarding.followTabFighters' | 'onboarding.followTabClubs' | 'onboarding.followTabEvents' }[] = [
     { key: 'fighters', labelKey: 'onboarding.followTabFighters' },
@@ -90,10 +95,8 @@ export default function FollowScreen() {
 
   return (
     <Screen>
-      <BackLink />
       <CenteredColumn style={styles.flex}>
         <View style={styles.header}>
-          <StepIndicator current={mainFlowStepNumber('follow')} total={MAIN_FLOW_TOTAL} />
           <Text style={styles.title}>{t('onboarding.followTitle')}</Text>
 
           <View style={styles.tabRow}>
@@ -164,8 +167,8 @@ export default function FollowScreen() {
         )}
 
         <View style={styles.footer}>
-          <Button label={t('onboarding.next')} uppercase={false} onPress={advance} style={styles.button} />
-          <Pressable onPress={advance} style={styles.skipLink} hitSlop={8}>
+          <Button label={t('onboarding.next')} uppercase={false} onPress={finish} style={styles.button} />
+          <Pressable onPress={finish} style={styles.skipLink} hitSlop={8}>
             <Text style={styles.skipLinkText}>{t('onboarding.skip')}</Text>
           </Pressable>
         </View>
