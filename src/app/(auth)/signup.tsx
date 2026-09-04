@@ -44,7 +44,7 @@ export default function SignupScreen() {
     wantsNotifications, finishOnboarding,
   } = useOnboarding()
   const params = useLocalSearchParams<{ role?: string; name?: string }>()
-  // Persona (onboarding/role.tsx) is the source of truth now that it sets
+  // Persona (onboarding/persona.tsx) is the source of truth now that it sets
   // role for all three personas — the route param stays as a fallback for
   // any stray direct link.
   const role: Role = ROLES.includes(onboardingRole as Role)

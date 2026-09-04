@@ -5,7 +5,7 @@ export default function OnboardingLayout() {
   return (
     <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: BG }, gestureEnabled: false }}>
       <Stack.Screen name="welcome" />
-      <Stack.Screen name="role" />
+      <Stack.Screen name="persona" />
       <Stack.Screen name="viewer-goals" />
       <Stack.Screen name="interests" />
       <Stack.Screen name="experience" />

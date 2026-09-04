@@ -25,7 +25,7 @@ export default function WelcomeScreen() {
           <Button
             label={t('onboarding.getStarted')}
             uppercase={false}
-            onPress={() => router.push('/(onboarding)/role')}
+            onPress={() => router.push('/(onboarding)/persona')}
           />
           <Pressable onPress={() => router.push('/(auth)/login')} style={styles.loginLink} hitSlop={8}>
             <Text style={styles.loginLinkText}>{t('onboarding.alreadyHaveAccount')}</Text>

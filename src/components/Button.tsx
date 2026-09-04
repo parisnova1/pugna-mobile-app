@@ -27,7 +27,7 @@ export default function Button({ label, onPress, variant = 'primary', disabled, 
       style={({ pressed }) => [style, pressed && styles.pressed, disabled && styles.disabled]}
     >
       {variant === 'primary' ? (
-        <GlassSurface variant="pill" strong interactive style={styles.base}>
+        <GlassSurface variant="pill" strong interactive style={[styles.base, styles.primaryShadow]}>
           <Text style={labelStyle}>{label}</Text>
         </GlassSurface>
       ) : (
@@ -48,6 +48,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   outline: { borderWidth: 1, borderColor: SURFACE_BORDER },
+  // Spec's primary-button elevation: `0 8px 24px rgba(0,0,0,0.45)`.
+  primaryShadow: {
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.45,
+    shadowRadius: 24,
+    elevation: 8,
+  },
   label: {
     fontFamily: FONT_DISPLAY_BOLD,
     fontSize: 13,

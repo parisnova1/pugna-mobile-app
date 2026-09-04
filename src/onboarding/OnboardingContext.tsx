@@ -15,7 +15,7 @@ const ORG_NAME_KEY = 'pugna:onboarding:orgName'
 // remain from the original 4-tile viewer breakdown, kept alive for the
 // older viewer-goals/interests/experience/gym screens (no longer part of
 // the main flow, but still directly reachable — not deleted). 'organizer'
-// is new: the current 3-card Persona screen ((onboarding)/role.tsx) only
+// is new: the current 3-card Persona screen ((onboarding)/persona.tsx) only
 // ever sets 'fan' (Zuschauer), 'organizer' (Veranstalter), or 'club'
 // (Verein). Distinct from `role` (the real backend enum) because the
 // backend has no concept of athlete/coach — both map to role 'viewer'.

@@ -25,7 +25,7 @@ const CARDS: { persona: Persona; role: Role; icon: IconName; titleKey: Translati
   { persona: 'club', role: 'club', icon: 'ring', titleKey: 'onboarding.persona.club', subKey: 'onboarding.persona.clubSub' },
 ]
 
-export default function RoleScreen() {
+export default function PersonaScreen() {
   const { t } = useLanguage()
   const { persona, setPersona, setRole } = useOnboarding()
   const [selected, setSelected] = useState<Persona | null>(
@@ -46,7 +46,7 @@ export default function RoleScreen() {
     <Screen>
       <CenteredColumn style={styles.content}>
         <ScrollView contentContainerStyle={styles.scroll}>
-          <StepIndicator current={mainFlowStepNumber('role')} total={MAIN_FLOW_TOTAL} />
+          <StepIndicator current={mainFlowStepNumber('persona')} total={MAIN_FLOW_TOTAL} />
           <Text style={styles.title}>{t('onboarding.roleTitle')}</Text>
           <Text style={styles.subtitle}>{t('onboarding.roleSubtitle')}</Text>
 

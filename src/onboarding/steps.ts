@@ -10,9 +10,9 @@
 export type FlowPersona = 'fan' | 'coach' | 'athlete'
 
 const FLOW: Record<FlowPersona, string[]> = {
-  fan: ['welcome', 'role', 'viewer-goals', 'interests', 'location', 'follow', 'permissions'],
-  coach: ['welcome', 'role', 'viewer-goals', 'interests', 'gym', 'location', 'follow', 'permissions'],
-  athlete: ['welcome', 'role', 'viewer-goals', 'interests', 'experience', 'gym', 'location', 'follow', 'permissions'],
+  fan: ['welcome', 'persona', 'viewer-goals', 'interests', 'location', 'follow', 'permissions'],
+  coach: ['welcome', 'persona', 'viewer-goals', 'interests', 'gym', 'location', 'follow', 'permissions'],
+  athlete: ['welcome', 'persona', 'viewer-goals', 'interests', 'experience', 'gym', 'location', 'follow', 'permissions'],
 }
 
 export function stepNumber(persona: FlowPersona, screen: string): number {
@@ -24,7 +24,7 @@ export const TOTAL_STEPS: Record<FlowPersona | 'club', number> = {
   fan: FLOW.fan.length,
   coach: FLOW.coach.length,
   athlete: FLOW.athlete.length,
-  club: 3, // welcome, role, club-info — then real signup, not counted here
+  club: 3, // welcome, persona, club-info — then real signup, not counted here
 }
 
 // The viewer/club main flow (Persona → Location → Permissions → real
@@ -32,7 +32,7 @@ export const TOTAL_STEPS: Record<FlowPersona | 'club', number> = {
 // map above, which only the older viewer-goals/interests/experience/gym
 // screens still use. Follow isn't part of this count — it runs after
 // signup succeeds (see (onboarding)/follow.tsx), not before it.
-const MAIN_FLOW = ['role', 'location', 'permissions'] as const
+const MAIN_FLOW = ['persona', 'location', 'permissions'] as const
 export const MAIN_FLOW_TOTAL = MAIN_FLOW.length
 
 export function mainFlowStepNumber(screen: (typeof MAIN_FLOW)[number]): number {
@@ -43,7 +43,7 @@ export function mainFlowStepNumber(screen: (typeof MAIN_FLOW)[number]): number {
 // Follow steps — an organization name and what they run in place of a
 // home city and a follow list, which don't mean much for someone there to
 // host events rather than discover them.
-const ORGANIZER_FLOW = ['role', 'organizer-info', 'organizer-focus', 'permissions'] as const
+const ORGANIZER_FLOW = ['persona', 'organizer-info', 'organizer-focus', 'permissions'] as const
 export const ORGANIZER_FLOW_TOTAL = ORGANIZER_FLOW.length
 
 export function organizerFlowStepNumber(screen: (typeof ORGANIZER_FLOW)[number]): number {
