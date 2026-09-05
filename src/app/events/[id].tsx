@@ -243,6 +243,7 @@ function EventDetailScreenInner() {
           )}
           {nextBout && (
             <View style={styles.nextCard}>
+              <View style={styles.nextDot} />
               <Text style={styles.nextLabel}>{t('eventDetail.next')}</Text>
               <Text style={styles.liveFighters}>
                 {fightersById[nextBout.fighter_red_id ?? -1]?.name ?? '?'} <Text style={styles.liveVs}>vs</Text> {fightersById[nextBout.fighter_blue_id ?? -1]?.name ?? '?'}
@@ -579,11 +580,15 @@ const styles = StyleSheet.create({
   liveLabel: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 11, letterSpacing: 1, color: LIVE_RED, textTransform: 'uppercase' },
   liveFighters: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 13, color: TEXT, textTransform: 'uppercase', flex: 1, textAlign: 'right' },
   liveVs: { color: MUTED },
-  nextCard: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: CARD, borderWidth: 1, borderColor: BORDER, borderRadius: 4, padding: 14, marginTop: 10 },
+  // Brighter border + a dot (mirroring liveCard/liveDot) than a plain neutral
+  // outline — a low-light venue needs NEXT to read as its own state, not
+  // blend into every other bordered card on the screen.
+  nextCard: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: CARD, borderWidth: 1, borderColor: 'rgba(255,255,255,0.4)', borderRadius: 4, padding: 14, marginTop: 10 },
+  nextDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: TEXT },
   intermissionCard: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: CARD, borderWidth: 1, borderColor: CAUTION_AMBER, borderRadius: 4, padding: 14, marginTop: 16 },
   intermissionLabel: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 11, letterSpacing: 1, color: CAUTION_AMBER, textTransform: 'uppercase' },
   intermissionNote: { fontFamily: FONT_BODY, fontSize: 13, color: TEXT, flex: 1, textAlign: 'right' },
-  nextLabel: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 11, letterSpacing: 1, color: MUTED, textTransform: 'uppercase' },
+  nextLabel: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 11, letterSpacing: 1, color: TEXT, textTransform: 'uppercase' },
   tabBar: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: BORDER, backgroundColor: CARD, paddingHorizontal: 12 },
   tabButton: { paddingVertical: 14, paddingHorizontal: 12 },
   tabLabel: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 13, letterSpacing: 0.8, color: MUTED, textTransform: 'uppercase' },

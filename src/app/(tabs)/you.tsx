@@ -5,6 +5,7 @@ import { Icon } from '@/components/icons/Icon'
 import { apiFetch } from '@/lib/api'
 import { useAuth } from '@/auth/AuthContext'
 import { useLanguage } from '@/i18n/LanguageContext'
+import { useToast } from '@/lib/toastContext'
 import { formatDisplayDate } from '@/lib/date'
 import Screen from '@/components/Screen'
 import Spinner from '@/components/Spinner'
@@ -176,6 +177,7 @@ function FighterWorklist({ fighter, fighterName, clubOptions, nominations, bouts
 function YouScreenInner() {
   const { user, logout } = useAuth()
   const { t } = useLanguage()
+  const { showToast } = useToast()
   const [savedEvents, setSavedEvents] = useState<PublicEvent[]>([])
   const [followedFighters, setFollowedFighters] = useState<FollowedFighter[]>([])
   const [followedClubs, setFollowedClubs] = useState<FollowedClub[]>([])
@@ -196,8 +198,9 @@ function YouScreenInner() {
       apiFetch<{ clubs: FollowedClub[] }>('/api/clubs/following'),
     ])
       .then(([s, f, c]) => { setSavedEvents(s.events); setFollowedFighters(f.fighters); setFollowedClubs(c.clubs) })
-      .catch(() => {})
+      .catch(() => showToast(t('common.loadError')))
       .finally(() => setLoading(false))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user])
 
   const refetchFighter = () => {
@@ -208,14 +211,14 @@ function YouScreenInner() {
       apiFetch<{ bouts: MyBout[] }>('/api/fighters/me/bouts'),
     ])
       .then(([f, n, b]) => { setMyFighter(f.fighter); setNominations(n.nominations); setMyBouts(b.bouts) })
-      .catch(() => {})
+      .catch(() => showToast(t('common.loadError')))
       .finally(() => setFighterLoading(false))
   }
 
   useEffect(() => {
     if (user?.role !== 'fighter') return
     refetchFighter()
-    apiFetch<{ clubs: ClubOption[] }>('/api/clubs').then(r => setClubOptions(r.clubs)).catch(() => {})
+    apiFetch<{ clubs: ClubOption[] }>('/api/clubs').then(r => setClubOptions(r.clubs)).catch(() => showToast(t('common.loadError')))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.role])
 

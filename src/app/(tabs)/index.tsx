@@ -10,6 +10,7 @@ import { useOnboarding } from '@/onboarding/OnboardingContext'
 import Screen from '@/components/Screen'
 import Spinner from '@/components/Spinner'
 import ErrorBoundary from '@/components/ErrorBoundary'
+import { useToast } from '@/lib/toastContext'
 import { looksLikeTest } from '@/lib/testFlag'
 import { ACCENT, ON_ACCENT, CARD, BORDER, MUTED, TEXT, FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_BODY } from '@/theme'
 
@@ -22,6 +23,7 @@ export default function DiscoverScreen() {
 function DiscoverScreenInner() {
   const { t } = useLanguage()
   const { user } = useAuth()
+  const { showToast } = useToast()
   const { homeLocation, disciplines } = useOnboarding()
   const [events, setEvents] = useState<PublicEvent[]>([])
   const [loading, setLoading] = useState(true)
@@ -45,8 +47,9 @@ function DiscoverScreenInner() {
         const rest = sorted.filter(e => !isMatch(e))
         setEvents([...personalized, ...rest].slice(0, 5))
       })
-      .catch(() => {})
+      .catch(() => showToast(t('common.loadError')))
       .finally(() => setLoading(false))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [homeLocation, disciplines])
 
   return (

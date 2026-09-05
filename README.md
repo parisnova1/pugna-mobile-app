@@ -1,56 +1,46 @@
-# Welcome to your Expo app 👋
+# Pugna (mobile)
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Expo Router app for Pugna — the mobile side of a private network for amateur
+combat sports. Shares one backend with the web app (`pugna` repo, `server/`
+directory): same API, same event data, real-time bracket updates over the
+same websocket.
 
-## Get started
-
-1. Install dependencies
-
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Running locally
 
 ```bash
-npm run reset-project
+npm install
+npm run web       # Expo web preview at http://localhost:8081
+# or
+npm start         # QR code for Expo Go on a physical device / simulator picker
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+The backend (`server/` in the sibling `pugna` repo) must be running
+separately — see that repo's README. This app has no local database of its
+own; everything comes from the shared API.
 
-### Other setup steps
+## Environment variables
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+Copy `.env.example` to `.env` and fill in what you need:
 
-## Learn more
+- `EXPO_PUBLIC_API_URL` — backend base URL. `localhost` works for Expo web
+  preview and the iOS Simulator; a physical device on Expo Go needs your dev
+  machine's LAN IP instead (e.g. `http://192.168.0.179:4000`), since the
+  device can't resolve `localhost` to your machine.
+- `EXPO_PUBLIC_GOOGLE_CLIENT_ID_WEB` / `_IOS` / `_ANDROID` — optional, only
+  needed for "Sign in with Google". The same three values (without the
+  `EXPO_PUBLIC_` prefix) must also be set on the backend as
+  `GOOGLE_CLIENT_ID_WEB` / `_IOS` / `_ANDROID` so it can verify tokens against
+  the right audience.
 
-To learn more about developing your project with Expo, look at the following resources:
+## Seeding demo data
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+There's no seed step in this repo — the backend seeds itself (demo clubs,
+events, and weight-class template packs) the first time it starts against an
+empty database. See the `pugna` (web) repo's README for how to force a fresh
+seed.
 
-## Join the community
+## QR codes
 
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+This app scans event QR codes (`scan.tsx`) but doesn't generate them —
+QR generation for a published event lives on the web app (Organizer → Manage
+Event → Setup tab). See that repo's README for print-size guidance.

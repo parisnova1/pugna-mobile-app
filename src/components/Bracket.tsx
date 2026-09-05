@@ -1,5 +1,6 @@
 import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native'
-import { ACCENT, CARD, BORDER, MUTED, TEXT, BG, SURFACE_STRONG, CAUTION_AMBER, FONT_DISPLAY_BOLD } from '@/theme'
+import { useLanguage } from '@/i18n/LanguageContext'
+import { ACCENT, CARD, BORDER, MUTED, TEXT, BG, SURFACE_STRONG, CAUTION_AMBER, LIVE_RED, FONT_DISPLAY_BOLD } from '@/theme'
 
 export type Bout = {
   id: number
@@ -29,8 +30,9 @@ function fighterLabel(id: number | null, lookup: FighterLookup, isFirstRound: bo
 // non-bye bouts become pressable and open a result-entry flow; the viewer's
 // read-only bracket just omits the prop. One component, two contexts.
 export default function Bracket({ bouts, fighters, onBoutClick }: { bouts: Bout[]; fighters: FighterLookup; onBoutClick?: (bout: Bout) => void }) {
+  const { t } = useLanguage()
   if (bouts.length === 0) {
-    return <Text style={styles.empty}>No bracket generated yet.</Text>
+    return <Text style={styles.empty}>{t('bracket.notGenerated')}</Text>
   }
 
   const totalRounds = Math.max(...bouts.map(b => b.round))
@@ -65,11 +67,13 @@ export default function Bracket({ bouts, fighters, onBoutClick }: { bouts: Bout[
                 )}
                 {!isBye && m.status === 'delayed' && (
                   <View style={[styles.methodBadge, styles.delayedBadge]}>
-                    <Text style={[styles.methodText, styles.delayedText]}>Delayed{m.delay_minutes ? ` +${m.delay_minutes}m` : ''}</Text>
+                    <Text style={[styles.methodText, styles.delayedText]}>{t('bracket.delayed')}{m.delay_minutes ? ` +${m.delay_minutes}m` : ''}</Text>
                   </View>
                 )}
                 {!isBye && m.status === 'scratched' && (
-                  <View style={styles.methodBadge}><Text style={styles.methodText}>Scratched</Text></View>
+                  <View style={[styles.methodBadge, styles.scratchedBadge]}>
+                    <Text style={[styles.methodText, styles.scratchedText]}>{t('bracket.scratched')}</Text>
+                  </View>
                 )}
               </Pressable>
             )
@@ -97,4 +101,6 @@ const styles = StyleSheet.create({
   methodText: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 9, color: MUTED, textTransform: 'uppercase' },
   delayedBadge: { borderColor: CAUTION_AMBER },
   delayedText: { color: CAUTION_AMBER },
+  scratchedBadge: { borderColor: LIVE_RED },
+  scratchedText: { color: LIVE_RED },
 })

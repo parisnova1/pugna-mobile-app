@@ -8,6 +8,7 @@ import { LanguageProvider } from '@/i18n/LanguageContext'
 import { OnboardingProvider } from '@/onboarding/OnboardingContext'
 import { useAppFonts } from '@/hooks/useAppFonts'
 import ErrorBoundary from '@/components/ErrorBoundary'
+import { ToastProvider } from '@/components/Toast'
 import { BG } from '@/theme'
 
 SplashScreen.preventAutoHideAsync()
@@ -44,22 +45,24 @@ export default function RootLayout() {
     <View style={{ flex: 1, backgroundColor: BG }}>
       <StatusBar style="light" />
       <LanguageProvider>
-        <AuthProvider>
-          <OnboardingProvider>
-            <ErrorBoundary>
-              <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: BG } }}>
-                <Stack.Screen name="(onboarding)" />
-                <Stack.Screen name="(tabs)" />
-                <Stack.Screen name="organizer" />
-                <Stack.Screen name="club-admin" />
-                <Stack.Screen name="organizer-events/[id]" />
-                <Stack.Screen name="(auth)/login" options={{ presentation: 'modal' }} />
-                <Stack.Screen name="(auth)/signup" options={{ presentation: 'modal' }} />
-                <Stack.Screen name="scan" options={{ presentation: 'fullScreenModal' }} />
-              </Stack>
-            </ErrorBoundary>
-          </OnboardingProvider>
-        </AuthProvider>
+        <ToastProvider>
+          <AuthProvider>
+            <OnboardingProvider>
+              <ErrorBoundary>
+                <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: BG } }}>
+                  <Stack.Screen name="(onboarding)" />
+                  <Stack.Screen name="(tabs)" />
+                  <Stack.Screen name="organizer" />
+                  <Stack.Screen name="club-admin" />
+                  <Stack.Screen name="organizer-events/[id]" />
+                  <Stack.Screen name="(auth)/login" options={{ presentation: 'modal' }} />
+                  <Stack.Screen name="(auth)/signup" options={{ presentation: 'modal' }} />
+                  <Stack.Screen name="scan" options={{ presentation: 'fullScreenModal' }} />
+                </Stack>
+              </ErrorBoundary>
+            </OnboardingProvider>
+          </AuthProvider>
+        </ToastProvider>
       </LanguageProvider>
     </View>
   )

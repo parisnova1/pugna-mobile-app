@@ -10,6 +10,7 @@ import Spinner from '@/components/Spinner'
 import EmptyState from '@/components/EmptyState'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import Chip from '@/components/Chip'
+import { useToast } from '@/lib/toastContext'
 import { looksLikeTest } from '@/lib/testFlag'
 import { DISCIPLINES as REAL_DISCIPLINES, DISCIPLINE_LABEL_KEY, DISCIPLINE_ICON } from '@/lib/disciplines'
 import { ACCENT, ON_ACCENT, CARD, BORDER, MUTED, TEXT, INPUT_BG, FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_BODY } from '@/theme'
@@ -24,6 +25,7 @@ export default function EventsScreen() {
 
 function EventsScreenInner() {
   const { t } = useLanguage()
+  const { showToast } = useToast()
   const { disciplines: preferredDisciplines } = useOnboarding()
   const [events, setEvents] = useState<PublicEvent[]>([])
   const [loading, setLoading] = useState(true)
@@ -36,8 +38,9 @@ function EventsScreenInner() {
   useEffect(() => {
     apiFetch<{ events: PublicEvent[] }>('/api/public/events')
       .then(r => setEvents(r.events))
-      .catch(() => {})
+      .catch(() => showToast(t('common.loadError')))
       .finally(() => setLoading(false))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Runs once, as soon as the onboarding preferences finish loading from
