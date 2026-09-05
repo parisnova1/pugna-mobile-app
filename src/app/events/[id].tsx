@@ -49,6 +49,7 @@ function EventDetailScreenInner() {
   const [muted, setMuted] = useState(false)
   const [muteBusy, setMuteBusy] = useState(false)
   const [liveBout, setLiveBout] = useState<LiveBout | null>(null)
+  const [liveClassBouts, setLiveClassBouts] = useState<Bout[]>([])
 
   useEffect(() => {
     setLoading(true)
@@ -83,6 +84,16 @@ function EventDetailScreenInner() {
       .catch(() => setLiveBout(null))
   }, [event?.current_bout_id])
 
+  // NEXT is derived from the live bout's own weight class, never hardcoded —
+  // same source of truth FightCardTab uses for that class, fetched here too
+  // since NEXT renders in the hero, above and independent of the tabs below.
+  useEffect(() => {
+    if (!liveBout) { setLiveClassBouts([]); return }
+    apiFetch<{ bouts: Bout[] }>(`/api/public/weight-classes/${liveBout.weight_class_id}/bracket`)
+      .then(r => setLiveClassBouts(r.bouts))
+      .catch(() => setLiveClassBouts([]))
+  }, [liveBout])
+
   useEffect(() => {
     if (!event?.qr_token) return
     const unsubscribe = subscribeToEvent(event.qr_token, msg => {
@@ -95,6 +106,11 @@ function EventDetailScreenInner() {
     })
     return unsubscribe
   }, [event?.qr_token, event?.current_bout_id])
+
+  const fightersById = Object.fromEntries(fighters.map(f => [f.id, { name: f.name }]))
+  const nextBout = liveClassBouts
+    .filter(b => b.status === 'scheduled' && b.id !== event?.current_bout_id)
+    .sort((a, b) => a.round - b.round || a.slot - b.slot)[0] ?? null
 
   const toggleMute = async () => {
     setMuteBusy(true)
@@ -109,6 +125,7 @@ function EventDetailScreenInner() {
   }
 
   const toggleSave = async () => {
+    if (!user) { router.push('/login'); return }
     setSaveBusy(true)
     try {
       if (saved) { await apiFetch(`/api/public/events/${id}/save`, { method: 'DELETE' }); setSaved(false) }
@@ -185,7 +202,7 @@ function EventDetailScreenInner() {
           <Text style={styles.organizer}>{event.organizer_name}</Text>
 
           <View style={styles.actionRow}>
-            {user?.role === 'viewer' && (
+            {(!user || user.role === 'viewer') && (
               <ActionButton icon="bookmark" filled={saved} label={saved ? t('eventDetail.saved') : t('eventDetail.save')} active={saved} disabled={saveBusy} onPress={toggleSave} />
             )}
             <ActionButton icon="share" label={t('eventDetail.share')} onPress={handleShare} />
@@ -207,6 +224,14 @@ function EventDetailScreenInner() {
               <Text style={styles.liveLabel}>{t('eventDetail.liveNow')}</Text>
               <Text style={styles.liveFighters}>
                 {liveBout.fighterRed?.name ?? '?'} <Text style={styles.liveVs}>vs</Text> {liveBout.fighterBlue?.name ?? '?'}
+              </Text>
+            </View>
+          )}
+          {nextBout && (
+            <View style={styles.nextCard}>
+              <Text style={styles.nextLabel}>{t('eventDetail.next')}</Text>
+              <Text style={styles.liveFighters}>
+                {fightersById[nextBout.fighter_red_id ?? -1]?.name ?? '?'} <Text style={styles.liveVs}>vs</Text> {fightersById[nextBout.fighter_blue_id ?? -1]?.name ?? '?'}
               </Text>
             </View>
           )}
@@ -540,6 +565,8 @@ const styles = StyleSheet.create({
   liveLabel: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 11, letterSpacing: 1, color: LIVE_RED, textTransform: 'uppercase' },
   liveFighters: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 13, color: TEXT, textTransform: 'uppercase', flex: 1, textAlign: 'right' },
   liveVs: { color: MUTED },
+  nextCard: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: CARD, borderWidth: 1, borderColor: BORDER, borderRadius: 4, padding: 14, marginTop: 10 },
+  nextLabel: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 11, letterSpacing: 1, color: MUTED, textTransform: 'uppercase' },
   tabBar: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: BORDER, backgroundColor: CARD, paddingHorizontal: 12 },
   tabButton: { paddingVertical: 14, paddingHorizontal: 12 },
   tabLabel: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 13, letterSpacing: 0.8, color: MUTED, textTransform: 'uppercase' },
