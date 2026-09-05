@@ -10,6 +10,8 @@ const PERSONA_KEY = 'pugna:onboarding:persona'
 const VIEWER_GOALS_KEY = 'pugna:onboarding:viewerGoals'
 const WANTS_NOTIFICATIONS_KEY = 'pugna:onboarding:wantsNotifications'
 const ORG_NAME_KEY = 'pugna:onboarding:orgName'
+const FIGHTER_CLUB_KEY = 'pugna:onboarding:fighterClub'
+const FIGHTER_WEIGHT_KEY = 'pugna:onboarding:fighterWeight'
 
 // Which onboarding persona card the user tapped. 'athlete'/'coach'/'fan'
 // remain from the original 4-tile viewer breakdown, kept alive for the
@@ -41,6 +43,12 @@ type OnboardingContextValue = {
   // prefills the name field on (auth)/signup.tsx for role 'organizer',
   // mirroring how club's name is collected today.
   orgName: string
+  // Set on the fighter-only (onboarding)/club-join.tsx step — applied via
+  // POST /api/fighters right after signup succeeds, same "collect during
+  // onboarding, apply once a session exists" pattern as orgName/disciplines.
+  fighterClubId: number | null
+  fighterClubName: string
+  fighterWeight: string
   setRole: (role: Role | null) => void
   setPersona: (persona: Persona | null) => void
   setHomeLocation: (location: string, coords?: { lat: number; lng: number } | null) => void
@@ -48,6 +56,8 @@ type OnboardingContextValue = {
   setViewerGoals: (goals: string[]) => void
   setWantsNotifications: (next: boolean) => void
   setOrgName: (next: string) => void
+  setFighterClub: (id: number | null, name: string) => void
+  setFighterWeight: (next: string) => void
   // Marks onboarding done, whether the user finished every screen or hit
   // "Überspringen" partway through — both land the user in (tabs) as a
   // guest and never show onboarding again on this device.
@@ -68,6 +78,9 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const [viewerGoals, setViewerGoalsState] = useState<string[]>([])
   const [wantsNotifications, setWantsNotificationsState] = useState<boolean | null>(null)
   const [orgName, setOrgNameState] = useState('')
+  const [fighterClubId, setFighterClubId] = useState<number | null>(null)
+  const [fighterClubName, setFighterClubName] = useState('')
+  const [fighterWeight, setFighterWeightState] = useState('')
 
   useEffect(() => {
     Promise.all([
@@ -79,7 +92,9 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       AsyncStorage.getItem(VIEWER_GOALS_KEY),
       AsyncStorage.getItem(WANTS_NOTIFICATIONS_KEY),
       AsyncStorage.getItem(ORG_NAME_KEY),
-    ]).then(([flag, storedRole, storedPersona, storedLocation, storedDisciplines, storedGoals, storedWantsNotif, storedOrgName]) => {
+      AsyncStorage.getItem(FIGHTER_CLUB_KEY),
+      AsyncStorage.getItem(FIGHTER_WEIGHT_KEY),
+    ]).then(([flag, storedRole, storedPersona, storedLocation, storedDisciplines, storedGoals, storedWantsNotif, storedOrgName, storedFighterClub, storedFighterWeight]) => {
       setHasOnboarded(flag === 'true')
       if (storedRole) setRoleState(storedRole as Role)
       if (storedPersona) setPersonaState(storedPersona as Persona)
@@ -103,6 +118,14 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       }
       if (storedWantsNotif) setWantsNotificationsState(storedWantsNotif === 'true')
       if (storedOrgName) setOrgNameState(storedOrgName)
+      if (storedFighterClub) {
+        try {
+          const parsed = JSON.parse(storedFighterClub)
+          setFighterClubId(parsed.id ?? null)
+          setFighterClubName(parsed.name ?? '')
+        } catch {}
+      }
+      if (storedFighterWeight) setFighterWeightState(storedFighterWeight)
       setReady(true)
     })
   }, [])
@@ -144,6 +167,17 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     AsyncStorage.setItem(ORG_NAME_KEY, next)
   }
 
+  const setFighterClub = (id: number | null, name: string) => {
+    setFighterClubId(id)
+    setFighterClubName(name)
+    AsyncStorage.setItem(FIGHTER_CLUB_KEY, JSON.stringify({ id, name }))
+  }
+
+  const setFighterWeight = (next: string) => {
+    setFighterWeightState(next)
+    AsyncStorage.setItem(FIGHTER_WEIGHT_KEY, next)
+  }
+
   const finishOnboarding = async () => {
     await AsyncStorage.setItem(FLAG_KEY, 'true')
     setHasOnboarded(true)
@@ -153,9 +187,9 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     <OnboardingContext.Provider
       value={{
         ready, hasOnboarded, role, persona, homeLocation, homeLat, homeLng, disciplines, viewerGoals,
-        wantsNotifications, orgName,
+        wantsNotifications, orgName, fighterClubId, fighterClubName, fighterWeight,
         setRole, setPersona, setHomeLocation, setDisciplines, setViewerGoals,
-        setWantsNotifications, setOrgName, finishOnboarding,
+        setWantsNotifications, setOrgName, setFighterClub, setFighterWeight, finishOnboarding,
       }}
     >
       {children}

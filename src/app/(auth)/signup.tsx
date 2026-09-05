@@ -13,7 +13,7 @@ import OrDivider from '@/components/OrDivider'
 import { roleHomePath } from '@/lib/roleHome'
 import { ACCENT, TEXT, BORDER, MUTED, BG, INPUT_BG, FONT_DISPLAY_BOLD, FONT_BODY } from '@/theme'
 
-const ROLES: Role[] = ['viewer', 'club', 'organizer']
+const ROLES: Role[] = ['viewer', 'club', 'organizer', 'fighter']
 
 // Applies the Permissions primer's notification intent via the real
 // settings API now that a session finally exists — there was no session to
@@ -41,7 +41,7 @@ export default function SignupScreen() {
   const { t } = useLanguage()
   const {
     role: onboardingRole, disciplines, homeLocation: onboardingLocation, homeLat, homeLng, orgName,
-    wantsNotifications, finishOnboarding,
+    fighterClubId, fighterWeight, wantsNotifications, finishOnboarding,
   } = useOnboarding()
   const params = useLocalSearchParams<{ role?: string; name?: string }>()
   // Persona (onboarding/persona.tsx) is the source of truth now that it sets
@@ -77,6 +77,15 @@ export default function SignupScreen() {
         await apiFetch('/api/clubs/me', {
           method: 'PATCH',
           body: JSON.stringify({ disciplines, location: homeLocation, lat: homeLat, lng: homeLng }),
+        }).catch(() => {})
+      }
+      // Fighter's club-join.tsx collected clubId + weight before signup —
+      // this is the same "collect during onboarding, apply once a session
+      // exists" pattern as the club PATCH above.
+      if (newUser.role === 'fighter' && fighterClubId != null && fighterWeight) {
+        await apiFetch('/api/fighters', {
+          method: 'POST',
+          body: JSON.stringify({ name: newUser.name, weight: fighterWeight, clubId: fighterClubId }),
         }).catch(() => {})
       }
       await applyNotificationPreference(wantsNotifications)

@@ -49,3 +49,16 @@ export const ORGANIZER_FLOW_TOTAL = ORGANIZER_FLOW.length
 export function organizerFlowStepNumber(screen: (typeof ORGANIZER_FLOW)[number]): number {
   return ORGANIZER_FLOW.indexOf(screen) + 1
 }
+
+// Fighter follows the same shape as the viewer/club main flow (still wants
+// Location + Follow after signup) with one extra step inserted — picking a
+// club, the "join or create path toward a club" the product brief asks for.
+// v1 only supports joining an existing club; going independent is a later
+// "coming soon" state, so this step isn't skippable the way most onboarding
+// fields are.
+const FIGHTER_FLOW = ['persona', 'club-join', 'location', 'permissions'] as const
+export const FIGHTER_FLOW_TOTAL = FIGHTER_FLOW.length
+
+export function fighterFlowStepNumber(screen: (typeof FIGHTER_FLOW)[number]): number {
+  return FIGHTER_FLOW.indexOf(screen) + 1
+}

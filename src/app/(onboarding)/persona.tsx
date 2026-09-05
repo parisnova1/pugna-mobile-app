@@ -14,13 +14,16 @@ import StepIndicator from '@/onboarding/StepIndicator'
 import { mainFlowStepNumber, MAIN_FLOW_TOTAL } from '@/onboarding/steps'
 import { TEXT, MUTED, CARD, BORDER, ACCENT, ON_ACCENT, FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_BODY } from '@/theme'
 
-// The 3 personas the current product actually has, each mapping 1:1 onto
-// the real backend role — no separate athlete/coach/fan breakdown anymore
-// (that older, finer split still exists for viewer-goals.tsx and friends,
-// which this flow no longer routes to, but stays reachable — see
-// OnboardingContext's Persona comment).
+// The 4 personas the current product actually has, each mapping 1:1 onto
+// the real backend role — no separate coach/fan breakdown anymore (that
+// older, finer split still exists for viewer-goals.tsx and friends, which
+// this flow no longer routes to, but stays reachable — see
+// OnboardingContext's Persona comment). 'athlete' is repurposed here for
+// the real Fighter persona/role — it no longer means the legacy fan/coach/
+// athlete breakdown once it's picked from this screen.
 const CARDS: { persona: Persona; role: Role; icon: IconName; titleKey: TranslationKey; subKey: TranslationKey }[] = [
   { persona: 'fan', role: 'viewer', icon: 'eye', titleKey: 'onboarding.persona.viewer', subKey: 'onboarding.persona.viewerSub' },
+  { persona: 'athlete', role: 'fighter', icon: 'glove', titleKey: 'onboarding.persona.fighter', subKey: 'onboarding.persona.fighterSub' },
   { persona: 'organizer', role: 'organizer', icon: 'bracket', titleKey: 'onboarding.persona.organizer', subKey: 'onboarding.persona.organizerSub' },
   { persona: 'club', role: 'club', icon: 'ring', titleKey: 'onboarding.persona.club', subKey: 'onboarding.persona.clubSub' },
 ]
@@ -39,7 +42,10 @@ export default function PersonaScreen() {
     setRole(card.role)
     // Organizer gets its own next step — an org name and focus don't mean
     // much for someone there to host events rather than discover them.
-    router.push(card.role === 'organizer' ? '/(onboarding)/organizer-info' : '/(onboarding)/location')
+    // Fighter inserts a club-join step before the usual Location step.
+    if (card.role === 'organizer') router.push('/(onboarding)/organizer-info')
+    else if (card.role === 'fighter') router.push('/(onboarding)/club-join')
+    else router.push('/(onboarding)/location')
   }
 
   return (
