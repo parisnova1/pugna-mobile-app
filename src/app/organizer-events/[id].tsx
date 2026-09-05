@@ -11,12 +11,13 @@ import Button from '@/components/Button'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import BracketView, { type Bout } from '@/components/Bracket'
 import DaySwitcher, { type EventDay } from '@/components/DaySwitcher'
-import { ACCENT, ON_ACCENT, TEXT, CARD, BORDER, MUTED, INPUT_BG, MODAL_SCRIM, FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_BODY } from '@/theme'
+import { ACCENT, ON_ACCENT, TEXT, CARD, BORDER, MUTED, CAUTION_AMBER, INPUT_BG, MODAL_SCRIM, FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_BODY } from '@/theme'
 
 type EventInfo = {
   id: number; name: string; date: string; location: string; venue: string; discipline: string; status: string
   format: 'bracket' | 'card'; numberOfDays?: number; number_of_days?: number; ringCount?: number; ring_count?: number
   current_bout_id?: number | null
+  intermission_note?: string | null
 }
 type WeightClass = { id: number; name: string; age_group: string; gender: string; rounds_count: number; round_minutes: number; rest_minutes: number; fighterCount: number; status?: 'open' | 'closed' }
 type EventFighter = { id: number; name: string; club: string; weight: string; record: string; weight_class_id: number | null; source?: 'manual' | 'walkup' | 'roster' }
@@ -109,7 +110,7 @@ function ManageEventInner() {
           {tab === 'weightClasses' && <WeightClassesTab eventId={String(id)} discipline={event.discipline} weightClasses={weightClasses} onChanged={load} />}
           {tab === 'nominations' && <NominationsTab eventId={String(id)} onChanged={load} />}
           {tab === 'fighters' && <FightersTab eventId={String(id)} fighters={fighters} weightClasses={weightClasses} onChanged={load} />}
-          {tab === 'bracket' && <BracketTab eventId={String(id)} currentBoutId={event.current_bout_id ?? null} numberOfDays={event.numberOfDays ?? event.number_of_days ?? 1} weightClasses={weightClasses} fighters={fighters} onChanged={load} />}
+          {tab === 'bracket' && <BracketTab eventId={String(id)} currentBoutId={event.current_bout_id ?? null} intermissionNote={event.intermission_note ?? null} numberOfDays={event.numberOfDays ?? event.number_of_days ?? 1} weightClasses={weightClasses} fighters={fighters} onChanged={load} />}
           {tab === 'fightCard' && <FightCardTab eventId={String(id)} />}
         </View>
       </ScrollView>
@@ -627,7 +628,7 @@ function AssignWeightClassModal({ fighter, eventId, weightClasses, onCancel, onS
 
 // ─── Bracket ────────────────────────────────────────────────────────────────
 
-function BracketTab({ eventId, currentBoutId, numberOfDays, weightClasses, fighters, onChanged }: { eventId: string; currentBoutId: number | null; numberOfDays: number; weightClasses: WeightClass[]; fighters: EventFighter[]; onChanged: () => void }) {
+function BracketTab({ eventId, currentBoutId, intermissionNote, numberOfDays, weightClasses, fighters, onChanged }: { eventId: string; currentBoutId: number | null; intermissionNote: string | null; numberOfDays: number; weightClasses: WeightClass[]; fighters: EventFighter[]; onChanged: () => void }) {
   const { t } = useLanguage()
   const [selected, setSelected] = useState<number | null>(weightClasses[0]?.id ?? null)
   const [bouts, setBouts] = useState<Bout[]>([])
@@ -638,10 +639,35 @@ function BracketTab({ eventId, currentBoutId, numberOfDays, weightClasses, fight
   const [days, setDays] = useState<EventDay[]>([])
   const [selectedDay, setSelectedDay] = useState<number | null>(null)
   const [daysBusy, setDaysBusy] = useState(false)
+  const [boutStatusBusyId, setBoutStatusBusyId] = useState<number | null>(null)
+  const [delayTarget, setDelayTarget] = useState<Bout | null>(null)
+  const [intermissionPromptOpen, setIntermissionPromptOpen] = useState(false)
+  const [intermissionBusy, setIntermissionBusy] = useState(false)
 
   const setLive = async (boutId: number | null) => {
     setLiveBusy(true)
     try { await apiFetch(`/api/events/${eventId}/current-bout`, { method: 'PATCH', body: JSON.stringify({ boutId }) }); onChanged() } catch { /* ignore */ } finally { setLiveBusy(false) }
+  }
+
+  const setBoutLiveStatus = async (boutId: number, status: 'scheduled' | 'delayed' | 'scratched', delayMinutes?: number) => {
+    setBoutStatusBusyId(boutId)
+    try {
+      await apiFetch(`/api/bouts/${boutId}/status`, { method: 'PATCH', body: JSON.stringify({ status, delayMinutes }) })
+      if (selected) loadBracket(selected)
+    } catch {
+      /* ignore */
+    } finally {
+      setBoutStatusBusyId(null)
+    }
+  }
+
+  const toggleIntermission = async () => {
+    if (intermissionNote !== null) {
+      setIntermissionBusy(true)
+      try { await apiFetch(`/api/events/${eventId}/intermission`, { method: 'DELETE' }); onChanged() } catch { /* ignore */ } finally { setIntermissionBusy(false) }
+    } else {
+      setIntermissionPromptOpen(true)
+    }
   }
 
   const fightersById = Object.fromEntries(fighters.map(f => [f.id, { name: f.name, club: f.club }]))
@@ -726,21 +752,79 @@ function BracketTab({ eventId, currentBoutId, numberOfDays, weightClasses, fight
 
       {loading ? <Spinner /> : <BracketView bouts={bouts} fighters={fightersById} onBoutClick={setResultTarget} />}
 
-      {bouts.filter(b => b.status === 'scheduled').length > 0 && (
+      {bouts.filter(b => b.status !== 'completed').length > 0 && (
         <View style={{ marginTop: 20, gap: 8 }}>
-          <Text style={styles.label}>{t('organizer.live.title')}</Text>
-          {bouts.filter(b => b.status === 'scheduled').map(b => {
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Text style={styles.label}>{t('organizer.live.title')}</Text>
+            <Pressable disabled={intermissionBusy} onPress={toggleIntermission}>
+              <Text style={[styles.deleteLink, intermissionNote !== null && { color: CAUTION_AMBER }]}>
+                {intermissionNote !== null ? t('organizer.live.intermissionEnd') : t('organizer.live.intermissionStart')}
+              </Text>
+            </Pressable>
+          </View>
+          {bouts.filter(b => b.status !== 'completed').map(b => {
             const isLive = currentBoutId === b.id
+            const busy = boutStatusBusyId === b.id
             return (
               <View key={b.id} style={styles.row}>
-                <Text style={styles.rowTitle}>{fightersById[b.fighter_red_id ?? -1]?.name ?? '?'} vs {fightersById[b.fighter_blue_id ?? -1]?.name ?? '?'}</Text>
-                <Pressable disabled={liveBusy} onPress={() => setLive(isLive ? null : b.id)}>
-                  <Text style={[styles.deleteLink, isLive && { color: ACCENT }]}>{isLive ? t('organizer.live.end') : t('organizer.live.go')}</Text>
-                </Pressable>
+                <Text style={styles.rowTitle}>
+                  {fightersById[b.fighter_red_id ?? -1]?.name ?? '?'} vs {fightersById[b.fighter_blue_id ?? -1]?.name ?? '?'}
+                  {b.status === 'delayed' && <Text style={{ color: CAUTION_AMBER }}> · {t('organizer.live.delayed')}{b.delay_minutes ? ` +${b.delay_minutes}m` : ''}</Text>}
+                  {b.status === 'scratched' && <Text style={{ color: MUTED }}> · {t('organizer.live.scratched')}</Text>}
+                </Text>
+                <View style={{ flexDirection: 'row', gap: 14 }}>
+                  <Pressable disabled={liveBusy || b.status === 'scratched'} onPress={() => setLive(isLive ? null : b.id)}>
+                    <Text style={[styles.deleteLink, isLive && { color: ACCENT }, b.status === 'scratched' && { opacity: 0.5 }]}>{isLive ? t('organizer.live.end') : t('organizer.live.go')}</Text>
+                  </Pressable>
+                  {b.status !== 'scratched' && (
+                    <Pressable disabled={busy} onPress={() => setDelayTarget(b)}>
+                      <Text style={styles.deleteLink}>{t('organizer.live.delay')}</Text>
+                    </Pressable>
+                  )}
+                  {b.status !== 'scratched' ? (
+                    <Pressable disabled={busy} onPress={() => setBoutLiveStatus(b.id, 'scratched')}>
+                      <Text style={styles.deleteLink}>{t('organizer.live.scratch')}</Text>
+                    </Pressable>
+                  ) : (
+                    <Pressable disabled={busy} onPress={() => setBoutLiveStatus(b.id, 'scheduled')}>
+                      <Text style={styles.deleteLink}>{t('organizer.live.reopen')}</Text>
+                    </Pressable>
+                  )}
+                </View>
               </View>
             )
           })}
         </View>
+      )}
+
+      {delayTarget && (
+        <PromptModal
+          title={t('organizer.live.delayPromptTitle')}
+          label={t('organizer.live.delayPromptLabel')}
+          placeholder="15"
+          keyboardType="number-pad"
+          onCancel={() => setDelayTarget(null)}
+          onSubmit={value => {
+            const minutes = Number(value)
+            setDelayTarget(null)
+            if (Number.isInteger(minutes) && minutes > 0) setBoutLiveStatus(delayTarget.id, 'delayed', minutes)
+          }}
+        />
+      )}
+
+      {intermissionPromptOpen && (
+        <PromptModal
+          title={t('organizer.live.intermissionPromptTitle')}
+          label={t('organizer.live.intermissionPromptLabel')}
+          placeholder={t('organizer.live.intermissionPromptPlaceholder')}
+          optional
+          onCancel={() => setIntermissionPromptOpen(false)}
+          onSubmit={async note => {
+            setIntermissionPromptOpen(false)
+            setIntermissionBusy(true)
+            try { await apiFetch(`/api/events/${eventId}/intermission`, { method: 'POST', body: JSON.stringify({ note }) }); onChanged() } catch { /* ignore */ } finally { setIntermissionBusy(false) }
+          }}
+        />
       )}
 
       {resultTarget && (
@@ -756,6 +840,46 @@ function BracketTab({ eventId, currentBoutId, numberOfDays, weightClasses, fight
 }
 
 const BOUT_METHODS = ['Decision', 'KO', 'TKO', 'RSC', 'Walkover', 'Abd', 'DQ', 'Injury'] as const
+
+// Small reusable text/number input dialog — Alert.prompt exists but is
+// iOS-only, and this app also runs on Android and web, so a real Modal is
+// needed for the two single-field inputs the live console needs (delay
+// minutes, intermission note).
+function PromptModal({ title, label, placeholder, keyboardType, optional, onCancel, onSubmit }: {
+  title: string
+  label: string
+  placeholder?: string
+  keyboardType?: 'default' | 'number-pad'
+  optional?: boolean
+  onCancel: () => void
+  onSubmit: (value: string) => void
+}) {
+  const { t } = useLanguage()
+  const [value, setValue] = useState('')
+
+  return (
+    <Modal transparent animationType="fade" onRequestClose={onCancel}>
+      <Pressable style={styles.modalOverlay} onPress={onCancel}>
+        <Pressable style={styles.modalCard} onPress={e => e.stopPropagation()}>
+          <Text style={styles.modalTitle}>{title}</Text>
+          <Field label={label}>
+            <TextInput
+              style={styles.input}
+              value={value}
+              onChangeText={setValue}
+              placeholder={placeholder}
+              placeholderTextColor={MUTED}
+              keyboardType={keyboardType ?? 'default'}
+              autoFocus
+            />
+          </Field>
+          <Button label={t('common.confirm')} onPress={() => onSubmit(value.trim())} disabled={!optional && !value.trim()} style={{ marginTop: 8 }} />
+          <Button label={t('common.cancel')} variant="ghost" onPress={onCancel} />
+        </Pressable>
+      </Pressable>
+    </Modal>
+  )
+}
 
 function ResultModal({ bout, fighters, onCancel, onSaved }: { bout: Bout; fighters: Record<number, { name: string; club: string }>; onCancel: () => void; onSaved: () => void }) {
   const { t } = useLanguage()

@@ -15,12 +15,13 @@ import Button from '@/components/Button'
 import BracketView, { type Bout } from '@/components/Bracket'
 import DaySwitcher, { type EventDay } from '@/components/DaySwitcher'
 import ErrorBoundary from '@/components/ErrorBoundary'
-import { ACCENT, ON_ACCENT, TEXT, CARD, BORDER, MUTED, BG, INPUT_BG, LIVE_RED, MODAL_SCRIM, FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_BODY } from '@/theme'
+import { ACCENT, ON_ACCENT, TEXT, CARD, BORDER, MUTED, BG, INPUT_BG, LIVE_RED, CAUTION_AMBER, MODAL_SCRIM, FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_BODY } from '@/theme'
 
 type EventInfo = {
   id: number; name: string; date: string; location: string; venue: string; discipline: string; status: string
   format: 'bracket' | 'card'; livestream_url: string; qr_token: string; fights: number; fighters: number; views: number; organizer_name: string
   current_bout_id: number | null
+  intermission_note: string | null
 }
 type LiveBout = { id: number; weight_class_id: number; fighterRed: { name: string } | null; fighterBlue: { name: string } | null; status: string }
 type WeightClass = { id: number; name: string; age_group: string; gender: string; rounds_count: number; round_minutes: number; rest_minutes: number; status?: string }
@@ -102,6 +103,13 @@ function EventDetailScreenInner() {
       }
       if (msg.type === 'bout:result' && msg.boutId === event.current_bout_id) {
         setEvent(prev => (prev ? { ...prev, current_bout_id: null } : prev))
+      }
+      if (msg.type === 'event:status') {
+        // The broadcast only carries a status string, not the intermission
+        // note text — refetch so the guest sees the organizer's actual note.
+        apiFetch<{ event: EventInfo }>(`/api/public/events/${id}`)
+          .then(r => setEvent(r.event))
+          .catch(() => {})
       }
     })
     return unsubscribe
@@ -218,6 +226,12 @@ function EventDetailScreenInner() {
             )}
           </View>
 
+          {event.intermission_note !== null && (
+            <View style={styles.intermissionCard}>
+              <Text style={styles.intermissionLabel}>{t('eventDetail.intermission')}</Text>
+              {!!event.intermission_note && <Text style={styles.intermissionNote}>{event.intermission_note}</Text>}
+            </View>
+          )}
           {liveBout && (
             <View style={styles.liveCard}>
               <View style={styles.liveDot} />
@@ -566,6 +580,9 @@ const styles = StyleSheet.create({
   liveFighters: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 13, color: TEXT, textTransform: 'uppercase', flex: 1, textAlign: 'right' },
   liveVs: { color: MUTED },
   nextCard: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: CARD, borderWidth: 1, borderColor: BORDER, borderRadius: 4, padding: 14, marginTop: 10 },
+  intermissionCard: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: CARD, borderWidth: 1, borderColor: CAUTION_AMBER, borderRadius: 4, padding: 14, marginTop: 16 },
+  intermissionLabel: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 11, letterSpacing: 1, color: CAUTION_AMBER, textTransform: 'uppercase' },
+  intermissionNote: { fontFamily: FONT_BODY, fontSize: 13, color: TEXT, flex: 1, textAlign: 'right' },
   nextLabel: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 11, letterSpacing: 1, color: MUTED, textTransform: 'uppercase' },
   tabBar: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: BORDER, backgroundColor: CARD, paddingHorizontal: 12 },
   tabButton: { paddingVertical: 14, paddingHorizontal: 12 },

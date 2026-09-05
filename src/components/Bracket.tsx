@@ -1,5 +1,5 @@
 import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native'
-import { ACCENT, CARD, BORDER, MUTED, TEXT, BG, SURFACE_STRONG, FONT_DISPLAY_BOLD } from '@/theme'
+import { ACCENT, CARD, BORDER, MUTED, TEXT, BG, SURFACE_STRONG, CAUTION_AMBER, FONT_DISPLAY_BOLD } from '@/theme'
 
 export type Bout = {
   id: number
@@ -11,6 +11,7 @@ export type Bout = {
   winner_id: number | null
   method: string | null
   event_day_id?: number | null
+  delay_minutes?: number | null
 }
 
 type FighterLookup = Record<number, { name: string; club: string }>
@@ -46,7 +47,7 @@ export default function Bracket({ bouts, fighters, onBoutClick }: { bouts: Bout[
           <Text style={styles.roundLabel}>{roundLabel(r)}</Text>
           {matches.map(m => {
             const isBye = m.fighter_red_id === null || m.fighter_blue_id === null
-            const isClickable = Boolean(onBoutClick) && m.status === 'scheduled' && !isBye
+            const isClickable = Boolean(onBoutClick) && m.status !== 'completed' && !isBye
             return (
               <Pressable key={m.id} style={[styles.bout, isClickable && styles.boutClickable]} onPress={isClickable ? () => onBoutClick!(m) : undefined} disabled={!isClickable}>
                 {([['red', m.fighter_red_id], ['blue', m.fighter_blue_id]] as const).map(([side, fid]) => {
@@ -61,6 +62,14 @@ export default function Bracket({ bouts, fighters, onBoutClick }: { bouts: Bout[
                 })}
                 {!isBye && m.status === 'completed' && m.method && (
                   <View style={styles.methodBadge}><Text style={styles.methodText}>{m.method}</Text></View>
+                )}
+                {!isBye && m.status === 'delayed' && (
+                  <View style={[styles.methodBadge, styles.delayedBadge]}>
+                    <Text style={[styles.methodText, styles.delayedText]}>Delayed{m.delay_minutes ? ` +${m.delay_minutes}m` : ''}</Text>
+                  </View>
+                )}
+                {!isBye && m.status === 'scratched' && (
+                  <View style={styles.methodBadge}><Text style={styles.methodText}>Scratched</Text></View>
                 )}
               </Pressable>
             )
@@ -86,4 +95,6 @@ const styles = StyleSheet.create({
   slotTextWinner: { color: TEXT, fontWeight: '800' },
   methodBadge: { position: 'absolute', right: -4, top: -10, backgroundColor: BG, borderWidth: 1, borderColor: BORDER, borderRadius: 3, paddingVertical: 1, paddingHorizontal: 6 },
   methodText: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 9, color: MUTED, textTransform: 'uppercase' },
+  delayedBadge: { borderColor: CAUTION_AMBER },
+  delayedText: { color: CAUTION_AMBER },
 })
