@@ -643,6 +643,7 @@ function BracketTab({ eventId, currentBoutId, intermissionNote, numberOfDays, we
   const [delayTarget, setDelayTarget] = useState<Bout | null>(null)
   const [intermissionPromptOpen, setIntermissionPromptOpen] = useState(false)
   const [intermissionBusy, setIntermissionBusy] = useState(false)
+  const [generatingAll, setGeneratingAll] = useState(false)
 
   const setLive = async (boutId: number | null) => {
     setLiveBusy(true)
@@ -713,6 +714,26 @@ function BracketTab({ eventId, currentBoutId, intermissionNote, numberOfDays, we
     }
   }
 
+  // Speed path for the common case (single-day event, several classes
+  // already filled): one tap instead of selecting and generating each class
+  // in turn. Reuses the exact same per-class endpoint the manual
+  // Generate/Regenerate button calls — no new bracket math.
+  const eligibleForAll = weightClasses.filter(wc => wc.fighterCount >= 2)
+  const generateAll = async () => {
+    setGeneratingAll(true)
+    try {
+      for (const wc of eligibleForAll) {
+        await apiFetch(`/api/weight-classes/${wc.id}/bracket`, { method: 'POST', body: JSON.stringify({ dayId: selectedDay }) })
+      }
+      if (selected) loadBracket(selected)
+      onChanged()
+    } catch {
+      /* ignore */
+    } finally {
+      setGeneratingAll(false)
+    }
+  }
+
   if (weightClasses.length === 0) return <Text style={styles.emptyBox}>{t('organizer.weightClass.none')}</Text>
 
   return (
@@ -728,13 +749,23 @@ function BracketTab({ eventId, currentBoutId, intermissionNote, numberOfDays, we
         </View>
       )}
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, marginBottom: 16 }}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, marginBottom: 12 }}>
         {weightClasses.map(wc => (
           <Pressable key={wc.id} onPress={() => setSelected(wc.id)} style={[styles.pill, selected === wc.id && styles.pillActive]}>
             <Text style={[styles.pillLabel, selected === wc.id && styles.pillLabelActive]}>{wc.name}</Text>
           </Pressable>
         ))}
       </ScrollView>
+
+      {eligibleForAll.length > 1 && (
+        <Button
+          label={generatingAll ? t('login.pleaseWait') : t('organizer.bracket.generateAll', { count: eligibleForAll.length })}
+          variant="outline"
+          disabled={generatingAll}
+          onPress={generateAll}
+          style={{ marginBottom: 16, alignSelf: 'flex-start', paddingVertical: 10 }}
+        />
+      )}
 
       {selectedWc && (
         <Button

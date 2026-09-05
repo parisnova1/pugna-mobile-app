@@ -71,7 +71,13 @@ function ClubMyEventsInner() {
         <EventFormModal
           event={formTarget === 'new' ? null : formTarget}
           onCancel={() => setFormTarget(null)}
-          onSaved={() => { setFormTarget(null); setLoading(true); load() }}
+          onSaved={event => {
+            const wasNew = formTarget === 'new'
+            setFormTarget(null)
+            setLoading(true)
+            load()
+            if (wasNew) router.push(`/organizer-events/${event.id}`)
+          }}
         />
       )}
     </Screen>

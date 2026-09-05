@@ -97,7 +97,15 @@ function OrganizerEventsInner() {
         <EventFormModal
           event={formTarget === 'new' ? null : formTarget}
           onCancel={() => setFormTarget(null)}
-          onSaved={() => { setFormTarget(null); setLoading(true); load() }}
+          onSaved={event => {
+            const wasNew = formTarget === 'new'
+            setFormTarget(null)
+            setLoading(true)
+            load()
+            // Straight into the builder, same as Duplicate — a fast create
+            // shouldn't dead-end back on the list the organizer just left.
+            if (wasNew) router.push(`/organizer-events/${event.id}`)
+          }}
         />
       )}
     </Screen>
@@ -108,7 +116,7 @@ function OrganizerEventsInner() {
 // events through the exact same form/backend as organizers — the events API
 // has no role restriction, only ownership, so this is the real feature, not
 // a lookalike copy that could drift from it.
-export function EventFormModal({ event, onCancel, onSaved }: { event: OrganizerEvent | null; onCancel: () => void; onSaved: () => void }) {
+export function EventFormModal({ event, onCancel, onSaved }: { event: OrganizerEvent | null; onCancel: () => void; onSaved: (event: OrganizerEvent) => void }) {
   const { t } = useLanguage()
   const [name, setName] = useState(event?.name ?? '')
   const [date, setDate] = useState(event?.date ?? '')
@@ -125,18 +133,16 @@ export function EventFormModal({ event, onCancel, onSaved }: { event: OrganizerE
     setError(null)
     setSaving(true)
     try {
-      if (event) {
-        await apiFetch(`/api/events/${event.id}`, {
-          method: 'PATCH',
-          body: JSON.stringify({ name: name.trim(), date: date.trim(), location: location.trim(), venue: venue.trim(), discipline, status }),
-        })
-      } else {
-        await apiFetch('/api/events', {
-          method: 'POST',
-          body: JSON.stringify({ name: name.trim(), date: date.trim(), location: location.trim(), venue: venue.trim(), discipline, format, status }),
-        })
-      }
-      onSaved()
+      const { event: saved } = event
+        ? await apiFetch<{ event: OrganizerEvent }>(`/api/events/${event.id}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ name: name.trim(), date: date.trim(), location: location.trim(), venue: venue.trim(), discipline, status }),
+          })
+        : await apiFetch<{ event: OrganizerEvent }>('/api/events', {
+            method: 'POST',
+            body: JSON.stringify({ name: name.trim(), date: date.trim(), location: location.trim(), venue: venue.trim(), discipline, format, status }),
+          })
+      onSaved(saved)
     } catch (err) {
       setError(err instanceof Error ? err.message : t('login.errorGeneric'))
     } finally {
