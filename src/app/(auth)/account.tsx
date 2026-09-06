@@ -3,6 +3,7 @@ import { View, Text, TextInput, StyleSheet, Pressable, KeyboardAvoidingView, Pla
 import { router, useLocalSearchParams } from 'expo-router'
 import { Icon } from '@/components/icons/Icon'
 import { useAuth, type Role, type User } from '@/auth/AuthContext'
+import { useOnboarding } from '@/onboarding/OnboardingContext'
 import { useLanguage } from '@/i18n/LanguageContext'
 import { apiFetch } from '@/lib/api'
 import Button from '@/components/Button'
@@ -25,8 +26,9 @@ function isSafeNext(next?: string): next is string {
 // is whatever their account already has).
 export default function AccountScreen() {
   const { signup, login } = useAuth()
+  const { finishOnboarding } = useOnboarding()
   const { t } = useLanguage()
-  const params = useLocalSearchParams<{ mode?: string; role?: string; next?: string; followEventId?: string }>()
+  const params = useLocalSearchParams<{ mode?: string; role?: string; next?: string; followEventId?: string; followClubId?: string }>()
 
   const [mode, setMode] = useState<Mode>(params.mode === 'login' ? 'login' : 'register')
   const role: Role = ROLES.includes(params.role as Role) ? (params.role as Role) : 'viewer'
@@ -45,11 +47,19 @@ export default function AccountScreen() {
   // their role home. An existing account (login) never gets routed through
   // Fields — "never block login if fields already exist."
   const afterAuth = async (user: User, isNewAccount: boolean) => {
+    // Any successful auth — register or login — means this device is no
+    // longer "fresh": the Welcome-gate in (tabs)/_layout.tsx must never
+    // fire again for it. Missing this call was a real regression (it's
+    // easy to lose sight of once Fields moved to a separate post-auth step).
+    await finishOnboarding()
     const next = params.next
     if (params.followEventId) {
       await apiFetch(`/api/public/events/${params.followEventId}/save`, { method: 'POST' }).catch(() => {})
     }
-    if (isSafeNext(next) && (user.role === 'viewer' || /^\/(events|e)\//.test(next))) {
+    if (params.followClubId) {
+      await apiFetch(`/api/clubs/${params.followClubId}/follow`, { method: 'POST' }).catch(() => {})
+    }
+    if (isSafeNext(next) && (user.role === 'viewer' || /^\/(events|e|clubs)\//.test(next))) {
       router.replace(next as never)
       return
     }

@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo, useRef } from 'react'
 import { View, Text, TextInput, FlatList, Pressable, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
 import { apiFetch } from '@/lib/api'
+import { useAuth } from '@/auth/AuthContext'
 import { useLanguage } from '@/i18n/LanguageContext'
 import { useOnboarding } from '@/onboarding/OnboardingContext'
 import Screen from '@/components/Screen'
@@ -11,24 +12,31 @@ import ErrorBoundary from '@/components/ErrorBoundary'
 import Chip from '@/components/Chip'
 import { looksLikeTest } from '@/lib/testFlag'
 import { DISCIPLINES as REAL_DISCIPLINES, DISCIPLINE_LABEL_KEY, DISCIPLINE_ICON } from '@/lib/disciplines'
-import { ACCENT, CARD, BORDER, MUTED, TEXT, INPUT_BG, FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_BODY } from '@/theme'
+import { ACCENT, ON_ACCENT, CARD, SURFACE, SURFACE_BORDER, MUTED, TEXT, INPUT_BG, FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_MONO_MEDIUM, FONT_BODY } from '@/theme'
 
-type PublicClub = { id: number; name: string; location: string; disciplines: string[]; founded_year: number | null; member_count: number }
+type PublicClub = { id: number; name: string; location: string; disciplines: string[] }
 
 const DISCIPLINES = ['All', ...REAL_DISCIPLINES]
 
+// A club-discover row, not a membership directory: name, city · sport, and
+// whether you follow them — no member counts, no letter-avatar hero. See
+// clubs/[id].tsx for the full public profile a row taps into; this list
+// never routes anywhere near /club-admin.
 export default function ClubsScreen() {
   return <ErrorBoundary><ClubsScreenInner /></ErrorBoundary>
 }
 
 function ClubsScreenInner() {
   const { t } = useLanguage()
+  const { user } = useAuth()
   const { disciplines: preferredDisciplines } = useOnboarding()
   const [clubs, setClubs] = useState<PublicClub[]>([])
   const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState('')
   // Empty array means "All", same convention as the Events tab's filter.
   const [active, setActive] = useState<string[]>([])
+  const [following, setFollowing] = useState<Set<number>>(new Set())
+  const [followBusy, setFollowBusy] = useState<number | null>(null)
   const appliedPrefs = useRef(false)
 
   useEffect(() => {
@@ -37,6 +45,13 @@ function ClubsScreenInner() {
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [])
+
+  useEffect(() => {
+    if (user?.role !== 'viewer') { setFollowing(new Set()); return }
+    apiFetch<{ clubs: { id: number }[] }>('/api/clubs/following')
+      .then(r => setFollowing(new Set(r.clubs.map(c => c.id))))
+      .catch(() => {})
+  }, [user?.role])
 
   useEffect(() => {
     if (!appliedPrefs.current && preferredDisciplines.length > 0) {
@@ -57,6 +72,32 @@ function ClubsScreenInner() {
       .filter(c => !q || c.name.toLowerCase().includes(q) || c.location.toLowerCase().includes(q) || c.disciplines.some(d => d.toLowerCase().includes(q)))
   }, [clubs, active, query])
 
+  const toggleFollow = async (club: PublicClub) => {
+    // Guest: no account to attach a follow to — send them through the same
+    // account flow the live card's Follow button uses, carrying followClubId
+    // so account.tsx follows this club automatically once signed in, then
+    // lands back here.
+    if (!user) {
+      router.push({ pathname: '/(auth)/account', params: { mode: 'register', role: 'viewer', next: '/clubs', followClubId: String(club.id) } })
+      return
+    }
+    if (user.role !== 'viewer') return
+    setFollowBusy(club.id)
+    const isFollowing = following.has(club.id)
+    try {
+      await apiFetch(`/api/clubs/${club.id}/follow`, { method: isFollowing ? 'DELETE' : 'POST' })
+      setFollowing(prev => {
+        const next = new Set(prev)
+        isFollowing ? next.delete(club.id) : next.add(club.id)
+        return next
+      })
+    } catch {
+      // leave state unchanged on failure
+    } finally {
+      setFollowBusy(null)
+    }
+  }
+
   return (
     <Screen>
       <View style={styles.header}>
@@ -64,7 +105,7 @@ function ClubsScreenInner() {
         <TextInput
           value={query}
           onChangeText={setQuery}
-          placeholder={t('header.searchPlaceholder')}
+          placeholder={t('clubs.searchPlaceholder')}
           placeholderTextColor={MUTED}
           style={styles.search}
         />
@@ -91,22 +132,33 @@ function ClubsScreenInner() {
           data={filtered}
           keyExtractor={c => String(c.id)}
           contentContainerStyle={styles.list}
-          ListEmptyComponent={<EmptyState message={t('events.noMatch')} />}
+          ListEmptyComponent={<EmptyState message={t('clubs.noClubs')} />}
           renderItem={({ item: c }) => {
-            const initials = c.name.split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase()
+            const sport = c.disciplines[0] ? t(DISCIPLINE_LABEL_KEY[c.disciplines[0]]) : ''
+            const isFollowing = following.has(c.id)
+            const showFollow = !user || user.role === 'viewer'
             return (
-              <Pressable style={styles.card} onPress={() => router.push(`/clubs/${c.id}`)}>
-                <View style={styles.avatar}><Text style={styles.avatarText}>{initials || '?'}</Text></View>
-                <View style={{ flex: 1 }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                    <Text style={styles.cardTitle}>{c.name}</Text>
+              <Pressable style={styles.row} onPress={() => router.push(`/clubs/${c.id}`)}>
+                <View style={styles.rowInfo}>
+                  <View style={styles.nameRow}>
+                    <Text style={styles.rowTitle} numberOfLines={1}>{c.name}</Text>
                     {looksLikeTest(c.name) && (
                       <View style={styles.testBadge}><Text style={styles.testBadgeText}>{t('common.testBadge')}</Text></View>
                     )}
                   </View>
-                  <Text style={styles.cardSub}>{[c.location, c.disciplines.join(', ')].filter(Boolean).join(' · ')}</Text>
-                  <Text style={styles.cardMeta}>{c.member_count} {t('clubs.members')}</Text>
+                  <Text style={styles.rowSub} numberOfLines={1}>{[c.location, sport].filter(Boolean).join(' · ')}</Text>
                 </View>
+                {showFollow && (
+                  <Pressable
+                    onPress={() => toggleFollow(c)}
+                    disabled={followBusy === c.id}
+                    style={[styles.followPill, isFollowing && styles.followPillActive]}
+                  >
+                    <Text style={[styles.followLabel, isFollowing && styles.followLabelActive]}>
+                      {isFollowing ? t('clubs.followingShort') : t('clubs.follow')}
+                    </Text>
+                  </Pressable>
+                )}
               </Pressable>
             )
           }}
@@ -118,17 +170,20 @@ function ClubsScreenInner() {
 
 const styles = StyleSheet.create({
   header: { padding: 20, paddingBottom: 12, gap: 12 },
-  title: { fontFamily: FONT_DISPLAY, fontSize: 28, textTransform: 'uppercase', color: TEXT },
-  search: { backgroundColor: INPUT_BG, borderWidth: 1, borderColor: BORDER, color: TEXT, padding: 12, borderRadius: 4, fontFamily: FONT_BODY, fontSize: 14 },
+  title: { fontFamily: FONT_DISPLAY, fontSize: 28, color: TEXT },
+  search: { backgroundColor: INPUT_BG, borderWidth: 1, borderColor: SURFACE_BORDER, color: TEXT, padding: 12, borderRadius: 12, fontFamily: FONT_BODY, fontSize: 14 },
   chipRow: { flexGrow: 0, marginBottom: 16 },
   centerFill: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   list: { paddingHorizontal: 16, paddingBottom: 24, gap: 10 },
-  card: { flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: CARD, borderWidth: 1, borderColor: BORDER, borderRadius: 4, padding: 14 },
-  avatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: CARD, alignItems: 'center', justifyContent: 'center' },
-  avatarText: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 16, color: ACCENT },
-  cardTitle: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 15, color: TEXT, textTransform: 'uppercase' },
-  testBadge: { borderWidth: 1, borderColor: TEXT, borderRadius: 4, paddingVertical: 1, paddingHorizontal: 6 },
-  testBadgeText: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 9, letterSpacing: 1, color: TEXT, textTransform: 'uppercase' },
-  cardSub: { fontFamily: FONT_BODY, fontSize: 12, color: MUTED, marginBottom: 2 },
-  cardMeta: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 11, letterSpacing: 0.6, color: MUTED, textTransform: 'uppercase' },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: CARD, borderRadius: 16, padding: 16 },
+  rowInfo: { flex: 1 },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  rowTitle: { flexShrink: 1, fontFamily: FONT_DISPLAY, fontSize: 16, color: TEXT },
+  testBadge: { borderWidth: 1, borderColor: SURFACE_BORDER, borderRadius: 999, paddingVertical: 1, paddingHorizontal: 7 },
+  testBadgeText: { fontFamily: FONT_MONO_MEDIUM, fontSize: 9, letterSpacing: 0.6, color: MUTED, textTransform: 'uppercase' },
+  rowSub: { fontFamily: FONT_MONO_MEDIUM, fontSize: 11.5, letterSpacing: 0.3, color: MUTED, textTransform: 'uppercase', marginTop: 4 },
+  followPill: { backgroundColor: ACCENT, borderRadius: 999, paddingVertical: 8, paddingHorizontal: 14 },
+  followPillActive: { backgroundColor: SURFACE, borderWidth: 1, borderColor: SURFACE_BORDER },
+  followLabel: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 12, color: ON_ACCENT },
+  followLabelActive: { color: TEXT },
 })
