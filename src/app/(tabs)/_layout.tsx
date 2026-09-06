@@ -54,7 +54,7 @@ export default function TabsLayout() {
       />
       <Tabs.Screen
         name="you"
-        options={{ title: t('header.viewerHome'), tabBarButton: makeTabBarButton('personCircle', t('header.viewerHome')) }}
+        options={{ title: t('nav.you'), tabBarButton: makeTabBarButton('personCircle', t('nav.you')) }}
       />
     </Tabs>
   )

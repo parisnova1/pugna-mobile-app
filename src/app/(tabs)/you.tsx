@@ -12,7 +12,10 @@ import Spinner from '@/components/Spinner'
 import EmptyState from '@/components/EmptyState'
 import Button from '@/components/Button'
 import ErrorBoundary from '@/components/ErrorBoundary'
-import { TEXT, ACCENT, ON_ACCENT, CARD, BORDER, MUTED, INPUT_BG, POSITIVE_GREEN, CAUTION_AMBER, FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_BODY } from '@/theme'
+import {
+  TEXT, ACCENT, ON_ACCENT, CARD, SURFACE, SURFACE_BORDER, MUTED, INPUT_BG, POSITIVE_GREEN, CAUTION_AMBER,
+  FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_BODY_MEDIUM, FONT_MONO_MEDIUM, FONT_BODY,
+} from '@/theme'
 
 type PublicEvent = { id: number; name: string; date: string; location: string; discipline: string; organizer_name: string; fights: number }
 type FollowedClub = { id: number; name: string; location: string }
@@ -28,6 +31,19 @@ type MyBout = { id: number; event_id: number; event_name: string; event_date: st
 
 export default function YouScreen() {
   return <ErrorBoundary><YouScreenInner /></ErrorBoundary>
+}
+
+// Days/hours until an ISO (YYYY-MM-DD) date, for the Next Bout countdown —
+// null for anything else (legacy non-ISO rows, or a date already past),
+// so the caller can fall back to a plain "no countdown" treatment instead
+// of showing a nonsense negative number.
+function countdownTo(isoDate: string): { days: number; hours: number } | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(isoDate)) return null
+  const target = new Date(`${isoDate}T00:00:00`).getTime()
+  const diffMs = target - Date.now()
+  if (diffMs <= 0) return null
+  const hours = Math.floor(diffMs / 3_600_000)
+  return { days: Math.floor(hours / 24), hours: hours % 24 }
 }
 
 function FighterWorklist({ fighter, fighterName, clubOptions, nominations, bouts, loading, onChanged }: {
@@ -65,6 +81,7 @@ function FighterWorklist({ fighter, fighterName, clubOptions, nominations, bouts
     if (selectedId == null || !weight.trim()) return
     setSaving(true)
     try {
+      // Payload unchanged — same fields the old form sent.
       if (fighter) {
         await apiFetch(`/api/fighters/${fighter.id}`, { method: 'PATCH', body: JSON.stringify({ clubId: selectedId, weight: weight.trim() }) })
       } else {
@@ -79,6 +96,7 @@ function FighterWorklist({ fighter, fighterName, clubOptions, nominations, bouts
     }
   }
 
+  // Unchanged payload — same endpoint, same {response} body as before.
   const respond = async (nominationId: number, response: 'accepted' | 'declined') => {
     setRespondingId(nominationId)
     try {
@@ -93,9 +111,11 @@ function FighterWorklist({ fighter, fighterName, clubOptions, nominations, bouts
 
   if (loading) return <Spinner />
 
+  const nextBout = bouts[0] ?? null
+  const countdown = nextBout ? countdownTo(nextBout.event_date) : null
+
   return (
-    <View style={{ marginBottom: 24 }}>
-      <Text style={styles.sectionLabel}>{t('fighterHome.profileTitle')}</Text>
+    <View style={{ marginBottom: 8 }}>
       <View style={styles.card}>
         {!fighter && <Text style={styles.cardHint}>{t('fighterHome.noClubYet')}</Text>}
 
@@ -134,6 +154,22 @@ function FighterWorklist({ fighter, fighterName, clubOptions, nominations, bouts
         )}
       </View>
 
+      <Text style={[styles.sectionLabel, { marginTop: 24 }]}>{t('fighterHome.nextBout')}</Text>
+      {nextBout ? (
+        <View style={styles.heroCard}>
+          <Text style={styles.heroTitle} numberOfLines={1}>{nextBout.event_name}</Text>
+          <Text style={styles.heroSub}>{formatDisplayDate(nextBout.event_date)} · {nextBout.weight_class_name}</Text>
+          {countdown && (
+            <Text style={styles.heroCountdown}>{t('fighterHome.daysHours', { days: countdown.days, hours: countdown.hours })}</Text>
+          )}
+          <Pressable style={styles.heroButton} onPress={() => router.push(`/events/${nextBout.event_id}`)}>
+            <Text style={styles.heroButtonText}>{t('fighterHome.toCard')}</Text>
+          </Pressable>
+        </View>
+      ) : (
+        <Text style={styles.emptyText}>{t('fighterHome.noNextBout')}</Text>
+      )}
+
       <Text style={[styles.sectionLabel, { marginTop: 24 }]}>{t('fighterHome.nominationsTitle')}</Text>
       {nominations.length === 0 ? (
         <Text style={styles.emptyText}>{t('fighterHome.noNominations')}</Text>
@@ -159,7 +195,7 @@ function FighterWorklist({ fighter, fighterName, clubOptions, nominations, bouts
         ))
       )}
 
-      <Text style={[styles.sectionLabel, { marginTop: 24 }]}>{t('fighterHome.upcomingBoutsTitle')}</Text>
+      <Text style={[styles.sectionLabel, { marginTop: 24 }]}>{t('fighterHome.myCards')}</Text>
       {bouts.length === 0 ? (
         <Text style={styles.emptyText}>{t('fighterHome.noUpcomingBouts')}</Text>
       ) : (
@@ -175,7 +211,7 @@ function FighterWorklist({ fighter, fighterName, clubOptions, nominations, bouts
 }
 
 function YouScreenInner() {
-  const { user, logout } = useAuth()
+  const { user } = useAuth()
   const { t } = useLanguage()
   const { showToast } = useToast()
   const [savedEvents, setSavedEvents] = useState<PublicEvent[]>([])
@@ -189,8 +225,18 @@ function YouScreenInner() {
   const [clubOptions, setClubOptions] = useState<ClubOption[]>([])
   const [fighterLoading, setFighterLoading] = useState(true)
 
+  // Club/organizer accounts have their own dedicated home (/club-admin,
+  // /organizer) — (tabs)/_layout.tsx already redirects them away from every
+  // viewer tab before this ever mounts, but that's a defensive belt-and-
+  // suspenders check here too, since this screen must never try to embed
+  // admin content inline.
   useEffect(() => {
-    if (!user) { setLoading(false); return }
+    if (user?.role === 'club') router.replace('/club-admin')
+    else if (user?.role === 'organizer') router.replace('/organizer')
+  }, [user?.role])
+
+  useEffect(() => {
+    if (!user || user.role === 'club' || user.role === 'organizer') { setLoading(false); return }
     setLoading(true)
     Promise.all([
       apiFetch<{ events: PublicEvent[] }>('/api/public/events/saved'),
@@ -222,14 +268,28 @@ function YouScreenInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.role])
 
+  // Redirecting — render nothing viewer-shaped while that happens.
+  if (user?.role === 'club' || user?.role === 'organizer') {
+    return <Screen><View style={styles.centerFill}><Spinner /></View></Screen>
+  }
+
   if (!user) {
     return (
       <Screen>
         <View style={styles.loggedOut}>
-          <Text style={styles.loggedOutTitle}>{t('viewerHome.loggedOutTitle')}</Text>
-          <Text style={styles.loggedOutBody}>{t('viewerHome.loggedOutSubtitle')}</Text>
-          <Button label={t('header.logIn')} onPress={() => router.push({ pathname: '/(auth)/account', params: { mode: 'login' } })} style={{ marginTop: 20 }} />
-          <Button label={t('header.joinPugna')} variant="outline" onPress={() => router.push({ pathname: '/(auth)/account', params: { mode: 'register' } })} style={{ marginTop: 12 }} />
+          <Text style={styles.loggedOutHeading}>{t('viewerHome.loggedOutHeading')}</Text>
+          <View style={styles.loggedOutButtons}>
+            <Button label={t('header.logIn')} uppercase={false} onPress={() => router.push({ pathname: '/(auth)/account', params: { mode: 'login' } })} />
+            <Button label={t('header.joinPugna')} uppercase={false} variant="outline" onPress={() => router.push({ pathname: '/(auth)/account', params: { mode: 'register' } })} style={{ marginTop: 10 }} />
+            <Pressable onPress={() => router.push('/events')} style={styles.guestLink} hitSlop={8}>
+              <Text style={styles.guestLinkText}>{t('viewerHome.guestToEvents')}</Text>
+            </Pressable>
+          </View>
+          <View style={styles.legalRow}>
+            <Pressable onPress={() => router.push('/impressum')} hitSlop={6}><Text style={styles.legalLink}>Impressum</Text></Pressable>
+            <Pressable onPress={() => router.push('/datenschutz')} hitSlop={6}><Text style={styles.legalLink}>Datenschutz</Text></Pressable>
+            <Pressable onPress={() => router.push('/nutzung')} hitSlop={6}><Text style={styles.legalLink}>Nutzungsbedingungen</Text></Pressable>
+          </View>
         </View>
       </Screen>
     )
@@ -243,8 +303,8 @@ function YouScreenInner() {
             <Text style={styles.greeting}>{t('viewerHome.hey', { name: user.name.split(' ')[0] })}</Text>
             <Text style={styles.email}>{user.email}</Text>
           </View>
-          <Pressable onPress={() => logout()} hitSlop={10}>
-            <Icon name="logout" size={22} color={MUTED} />
+          <Pressable onPress={() => router.push('/settings' as never)} hitSlop={10} style={styles.gearButton}>
+            <Icon name="settings" size={20} color={TEXT} />
           </Pressable>
         </View>
 
@@ -260,40 +320,44 @@ function YouScreenInner() {
           />
         )}
 
-        <Text style={styles.sectionLabel}>{t('viewerHome.savedEvents')}</Text>
-        {loading ? <Spinner /> : savedEvents.length === 0 ? (
-          <EmptyState message={t('viewerHome.noSaved')} ctaLabel={t('viewerHome.browseEvents')} onPress={() => router.push('/(tabs)/events')} />
-        ) : (
-          savedEvents.map(ev => (
-            <Pressable key={ev.id} style={styles.row} onPress={() => router.push(`/events/${ev.id}`)}>
-              <Text style={styles.rowTitle} numberOfLines={1}>{ev.name}</Text>
-              <Text style={styles.rowSub} numberOfLines={1}>{ev.location}</Text>
-            </Pressable>
-          ))
-        )}
+        {user.role === 'viewer' && (
+          <>
+            <Text style={styles.sectionLabel}>{t('viewerHome.savedEvents')}</Text>
+            {loading ? <Spinner /> : savedEvents.length === 0 ? (
+              <EmptyState message={t('viewerHome.noSaved')} ctaLabel={t('viewerHome.browseEvents')} onPress={() => router.push('/(tabs)/events')} />
+            ) : (
+              savedEvents.map(ev => (
+                <Pressable key={ev.id} style={styles.row} onPress={() => router.push(`/events/${ev.id}`)}>
+                  <Text style={styles.rowTitle} numberOfLines={1}>{ev.name}</Text>
+                  <Text style={styles.rowSub} numberOfLines={1}>{ev.location}</Text>
+                </Pressable>
+              ))
+            )}
 
-        <Text style={[styles.sectionLabel, { marginTop: 24 }]}>{t('viewerHome.fightersYouFollow')}</Text>
-        {loading ? null : followedFighters.length === 0 ? (
-          <EmptyState message={t('viewerHome.noFightersFollowed')} ctaLabel={t('viewerHome.browseEvents')} onPress={() => router.push('/(tabs)/events')} />
-        ) : (
-          followedFighters.map(f => (
-            <Pressable key={f.id} style={styles.row} onPress={() => router.push(`/fighters/${f.id}`)}>
-              <Text style={styles.rowTitle} numberOfLines={1}>{f.name}</Text>
-              <Text style={styles.rowSub} numberOfLines={1}>{f.club} · {f.weight}</Text>
-            </Pressable>
-          ))
-        )}
+            <Text style={[styles.sectionLabel, { marginTop: 24 }]}>{t('viewerHome.fightersYouFollow')}</Text>
+            {loading ? null : followedFighters.length === 0 ? (
+              <EmptyState message={t('viewerHome.noFightersFollowed')} ctaLabel={t('viewerHome.browseEvents')} onPress={() => router.push('/(tabs)/events')} />
+            ) : (
+              followedFighters.map(f => (
+                <Pressable key={f.id} style={styles.row} onPress={() => router.push(`/fighters/${f.id}`)}>
+                  <Text style={styles.rowTitle} numberOfLines={1}>{f.name}</Text>
+                  <Text style={styles.rowSub} numberOfLines={1}>{f.club} · {f.weight}</Text>
+                </Pressable>
+              ))
+            )}
 
-        <Text style={[styles.sectionLabel, { marginTop: 24 }]}>{t('viewerHome.clubsYouFollow')}</Text>
-        {loading ? null : followedClubs.length === 0 ? (
-          <EmptyState message={t('viewerHome.noClubsFollowed')} ctaLabel={t('viewerHome.browseClubs')} onPress={() => router.push('/(tabs)/clubs')} />
-        ) : (
-          followedClubs.map(c => (
-            <Pressable key={c.id} style={styles.row} onPress={() => router.push(`/clubs/${c.id}`)}>
-              <Text style={styles.rowTitle} numberOfLines={1}>{c.name}</Text>
-              <Text style={styles.rowSub} numberOfLines={1}>{c.location}</Text>
-            </Pressable>
-          ))
+            <Text style={[styles.sectionLabel, { marginTop: 24 }]}>{t('viewerHome.clubsYouFollow')}</Text>
+            {loading ? null : followedClubs.length === 0 ? (
+              <EmptyState message={t('viewerHome.noClubsFollowed')} ctaLabel={t('viewerHome.browseClubs')} onPress={() => router.push('/(tabs)/clubs')} />
+            ) : (
+              followedClubs.map(c => (
+                <Pressable key={c.id} style={styles.row} onPress={() => router.push(`/clubs/${c.id}`)}>
+                  <Text style={styles.rowTitle} numberOfLines={1}>{c.name}</Text>
+                  <Text style={styles.rowSub} numberOfLines={1}>{c.location}</Text>
+                </Pressable>
+              ))
+            )}
+          </>
         )}
       </ScrollView>
     </Screen>
@@ -301,37 +365,50 @@ function YouScreenInner() {
 }
 
 const styles = StyleSheet.create({
-  loggedOut: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
-  loggedOutTitle: { fontFamily: FONT_DISPLAY, fontSize: 26, textTransform: 'uppercase', color: TEXT, textAlign: 'center', marginBottom: 8 },
-  loggedOutBody: { fontFamily: FONT_BODY, fontSize: 14, color: MUTED, textAlign: 'center' },
+  centerFill: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  loggedOut: { flex: 1, padding: 28, paddingTop: 60 },
+  loggedOutHeading: { fontFamily: FONT_DISPLAY, fontSize: 34, color: TEXT, marginBottom: 28 },
+  loggedOutButtons: { gap: 0 },
+  guestLink: { alignSelf: 'center', padding: 10, marginTop: 18 },
+  guestLinkText: { fontFamily: FONT_BODY_MEDIUM, fontSize: 14, color: MUTED },
+  legalRow: { flexDirection: 'row', justifyContent: 'center', gap: 14, marginTop: 'auto', paddingBottom: 20 },
+  legalLink: { fontFamily: FONT_BODY, fontSize: 11.5, color: MUTED },
   scroll: { padding: 20, paddingBottom: 40 },
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28 },
-  greeting: { fontFamily: FONT_DISPLAY, fontSize: 26, textTransform: 'uppercase', color: TEXT },
+  greeting: { fontFamily: FONT_DISPLAY, fontSize: 24, color: TEXT },
   email: { fontFamily: FONT_BODY, fontSize: 12, color: MUTED, marginTop: 4 },
-  sectionLabel: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 13, letterSpacing: 1, color: MUTED, textTransform: 'uppercase', marginBottom: 12 },
-  row: { backgroundColor: CARD, borderWidth: 1, borderColor: BORDER, borderRadius: 4, padding: 14, marginBottom: 8 },
-  rowTitle: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 14, color: TEXT, textTransform: 'uppercase' },
-  rowSub: { fontFamily: FONT_BODY, fontSize: 12, color: MUTED, marginTop: 2 },
+  gearButton: { width: 36, height: 36, borderRadius: 10, backgroundColor: SURFACE, borderWidth: 1, borderColor: SURFACE_BORDER, alignItems: 'center', justifyContent: 'center' },
+  sectionLabel: { fontFamily: FONT_MONO_MEDIUM, fontSize: 11, letterSpacing: 0.8, color: MUTED, textTransform: 'uppercase', marginBottom: 12 },
+  row: { backgroundColor: CARD, borderRadius: 16, padding: 16, marginBottom: 8 },
+  rowTitle: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 15, color: TEXT },
+  rowSub: { fontFamily: FONT_BODY, fontSize: 12.5, color: MUTED, marginTop: 3 },
 
-  card: { backgroundColor: CARD, borderWidth: 1, borderColor: BORDER, borderRadius: 12, padding: 16 },
+  heroCard: { backgroundColor: CARD, borderRadius: 18, padding: 18 },
+  heroTitle: { fontFamily: FONT_DISPLAY, fontSize: 19, color: TEXT },
+  heroSub: { fontFamily: FONT_MONO_MEDIUM, fontSize: 11.5, letterSpacing: 0.3, color: MUTED, textTransform: 'uppercase', marginTop: 6 },
+  heroCountdown: { fontFamily: FONT_DISPLAY, fontSize: 28, color: ACCENT, marginTop: 14, letterSpacing: -0.5 },
+  heroButton: { marginTop: 16, height: 48, borderRadius: 13, backgroundColor: ACCENT, alignItems: 'center', justifyContent: 'center' },
+  heroButtonText: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 14.5, color: ON_ACCENT },
+
+  card: { backgroundColor: CARD, borderRadius: 18, padding: 18 },
   cardHint: { fontFamily: FONT_BODY, fontSize: 13, color: MUTED, marginBottom: 12, lineHeight: 18 },
   profileRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 20, marginBottom: 12 },
   profileField: {},
-  profileLabel: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 10, letterSpacing: 1, color: MUTED, textTransform: 'uppercase' },
-  profileValue: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 14, color: TEXT, marginTop: 2 },
-  linkText: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 12, color: TEXT, textDecorationLine: 'underline' },
-  fieldLabel: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 11, letterSpacing: 1, color: MUTED, textTransform: 'uppercase', marginBottom: 6, marginTop: 10 },
-  input: { backgroundColor: INPUT_BG, borderWidth: 1, borderColor: BORDER, color: TEXT, padding: 12, fontFamily: FONT_BODY, fontSize: 14, borderRadius: 8 },
-  dropdown: { backgroundColor: CARD, borderWidth: 1, borderColor: BORDER, borderRadius: 8, marginTop: 4, overflow: 'hidden' },
-  option: { padding: 10, borderBottomWidth: 1, borderBottomColor: BORDER },
+  profileLabel: { fontFamily: FONT_MONO_MEDIUM, fontSize: 10, letterSpacing: 0.6, color: MUTED, textTransform: 'uppercase' },
+  profileValue: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 14, color: TEXT, marginTop: 3 },
+  linkText: { fontFamily: FONT_BODY_MEDIUM, fontSize: 13, color: TEXT, textDecorationLine: 'underline' },
+  fieldLabel: { fontFamily: FONT_MONO_MEDIUM, fontSize: 11, letterSpacing: 0.6, color: MUTED, textTransform: 'uppercase', marginBottom: 7, marginTop: 12 },
+  input: { backgroundColor: INPUT_BG, borderWidth: 1, borderColor: SURFACE_BORDER, color: TEXT, padding: 12, fontFamily: FONT_BODY, fontSize: 14, borderRadius: 12 },
+  dropdown: { backgroundColor: CARD, borderWidth: 1, borderColor: SURFACE_BORDER, borderRadius: 12, marginTop: 4, overflow: 'hidden' },
+  option: { padding: 10, borderBottomWidth: 1, borderBottomColor: SURFACE_BORDER },
   optionLast: { borderBottomWidth: 0 },
   optionText: { fontFamily: FONT_BODY, fontSize: 13, color: TEXT },
-  emptyText: { fontFamily: FONT_BODY, fontSize: 13, color: MUTED, marginBottom: 8 },
-  statusText: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 8 },
-  responseText: { fontFamily: FONT_BODY, fontSize: 12, color: MUTED, marginTop: 6, textTransform: 'uppercase' },
+  emptyText: { fontFamily: FONT_BODY, fontSize: 13.5, color: MUTED, marginBottom: 8 },
+  statusText: { fontFamily: FONT_MONO_MEDIUM, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.4, marginTop: 8 },
+  responseText: { fontFamily: FONT_BODY, fontSize: 12, color: MUTED, marginTop: 6 },
   respondRow: { flexDirection: 'row', gap: 8, marginTop: 10 },
   acceptBtn: { backgroundColor: ACCENT, borderRadius: 13, paddingVertical: 10, paddingHorizontal: 18 },
-  acceptBtnText: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 11, color: ON_ACCENT, textTransform: 'uppercase' },
-  declineBtn: { borderWidth: 1, borderColor: BORDER, borderRadius: 13, paddingVertical: 10, paddingHorizontal: 18 },
-  declineBtnText: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 11, color: TEXT, textTransform: 'uppercase' },
+  acceptBtnText: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 12, color: ON_ACCENT },
+  declineBtn: { borderWidth: 1, borderColor: SURFACE_BORDER, borderRadius: 13, paddingVertical: 10, paddingHorizontal: 18 },
+  declineBtnText: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 12, color: TEXT },
 })
