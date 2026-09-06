@@ -115,10 +115,18 @@ export default function AccountScreen() {
             <Icon name="close" size={22} color={MUTED} />
           </Pressable>
 
-          <Text style={styles.eyebrow}>{mode === 'register' ? t('login.joinPugna') : t('login.welcomeBack')}</Text>
+          <Text style={styles.eyebrow}>{mode === 'register' ? t('login.welcome') : t('login.welcomeBack')}</Text>
           <View style={styles.titleRow}>
             <Text style={styles.title}>{mode === 'register' ? t('login.createAccount') : t('login.logIn')}</Text>
-            {mode === 'register' && role !== 'viewer' && (
+            {/* Every account has exactly one fixed role (set at registration,
+                never chosen at login) — this chip doesn't let you pick a
+                role, it just surfaces which one a link already pointed you
+                at (e.g. sparring.tsx sends club members here with
+                role=club) so it's clear which persona's account you're
+                about to create or sign into. A generic entry point (Welcome's
+                "Anmelden", You tab's "Log In") carries no role param, so no
+                chip shows — nothing false to claim there. */}
+            {role !== 'viewer' && (
               <View style={styles.roleChip}>
                 <Text style={styles.roleChipText}>{t(`role.${role}`)}</Text>
               </View>

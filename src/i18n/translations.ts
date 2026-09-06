@@ -307,6 +307,7 @@ export const en = {
   'accessRestricted.body': 'Only {{role}} accounts can access this page.',
 
   // ── Login modal ───────────────────────────────────────────────────────
+  'login.welcome': 'Welcome',
   'login.welcomeBack': 'Welcome Back',
   'login.joinPugna': 'Join Pugna',
   'login.logIn': 'Log In',
@@ -943,6 +944,7 @@ export const de: Record<TranslationKey, string> = {
   'accessRestricted.title': 'Zugriff eingeschränkt',
   'accessRestricted.body': 'Nur {{role}}-Konten können auf diese Seite zugreifen.',
 
+  'login.welcome': 'Willkommen',
   'login.welcomeBack': 'Willkommen zurück',
   'login.joinPugna': 'Bei Pugna registrieren',
   'login.logIn': 'Anmelden',
