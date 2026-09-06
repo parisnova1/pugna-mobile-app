@@ -11,7 +11,7 @@ import Button from '@/components/Button'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import BracketView, { type Bout } from '@/components/Bracket'
 import DaySwitcher, { type EventDay } from '@/components/DaySwitcher'
-import { ACCENT, ON_ACCENT, TEXT, CARD, BORDER, MUTED, CAUTION_AMBER, INPUT_BG, MODAL_SCRIM, FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_BODY } from '@/theme'
+import { ACCENT, ON_ACCENT, TEXT, CARD, BORDER, MUTED, CAUTION_AMBER, INPUT_BG, MODAL_SCRIM, FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_BODY, FONT_BODY_MEDIUM } from '@/theme'
 
 type EventInfo = {
   id: number; name: string; date: string; location: string; venue: string; discipline: string; status: string
@@ -1155,5 +1155,5 @@ const styles = StyleSheet.create({
   pillLabel: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 11, letterSpacing: 0.6, color: MUTED, textTransform: 'uppercase' },
   pillLabelActive: { color: ON_ACCENT },
   lockedNote: { fontFamily: FONT_BODY, fontSize: 12, color: MUTED, marginBottom: 12 },
-  errorText: { fontFamily: FONT_BODY, fontSize: 13, fontWeight: '700', color: TEXT, marginBottom: 8 },
+  errorText: { fontFamily: FONT_BODY_MEDIUM, fontSize: 13, color: TEXT, marginBottom: 8 },
 })

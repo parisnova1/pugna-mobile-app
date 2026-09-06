@@ -12,7 +12,7 @@ import Spinner from '@/components/Spinner'
 import EmptyState from '@/components/EmptyState'
 import Button from '@/components/Button'
 import ErrorBoundary from '@/components/ErrorBoundary'
-import { TEXT, CARD, BORDER, MUTED, INPUT_BG, POSITIVE_GREEN, CAUTION_AMBER, FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_BODY } from '@/theme'
+import { TEXT, ACCENT, ON_ACCENT, CARD, BORDER, MUTED, INPUT_BG, POSITIVE_GREEN, CAUTION_AMBER, FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_BODY } from '@/theme'
 
 type PublicEvent = { id: number; name: string; date: string; location: string; discipline: string; organizer_name: string; fights: number }
 type FollowedClub = { id: number; name: string; location: string }
@@ -228,8 +228,8 @@ function YouScreenInner() {
         <View style={styles.loggedOut}>
           <Text style={styles.loggedOutTitle}>{t('viewerHome.loggedOutTitle')}</Text>
           <Text style={styles.loggedOutBody}>{t('viewerHome.loggedOutSubtitle')}</Text>
-          <Button label={t('header.logIn')} onPress={() => router.push('/(auth)/login')} style={{ marginTop: 20 }} />
-          <Button label={t('header.joinPugna')} variant="outline" onPress={() => router.push('/(auth)/signup')} style={{ marginTop: 12 }} />
+          <Button label={t('header.logIn')} onPress={() => router.push({ pathname: '/(auth)/account', params: { mode: 'login' } })} style={{ marginTop: 20 }} />
+          <Button label={t('header.joinPugna')} variant="outline" onPress={() => router.push({ pathname: '/(auth)/account', params: { mode: 'register' } })} style={{ marginTop: 12 }} />
         </View>
       </Screen>
     )
@@ -330,8 +330,8 @@ const styles = StyleSheet.create({
   statusText: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 8 },
   responseText: { fontFamily: FONT_BODY, fontSize: 12, color: MUTED, marginTop: 6, textTransform: 'uppercase' },
   respondRow: { flexDirection: 'row', gap: 8, marginTop: 10 },
-  acceptBtn: { backgroundColor: POSITIVE_GREEN, borderRadius: 8, paddingVertical: 8, paddingHorizontal: 16 },
-  acceptBtnText: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 11, color: '#fff', textTransform: 'uppercase' },
-  declineBtn: { borderWidth: 1, borderColor: BORDER, borderRadius: 8, paddingVertical: 8, paddingHorizontal: 16 },
+  acceptBtn: { backgroundColor: ACCENT, borderRadius: 13, paddingVertical: 10, paddingHorizontal: 18 },
+  acceptBtnText: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 11, color: ON_ACCENT, textTransform: 'uppercase' },
+  declineBtn: { borderWidth: 1, borderColor: BORDER, borderRadius: 13, paddingVertical: 10, paddingHorizontal: 18 },
   declineBtnText: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 11, color: TEXT, textTransform: 'uppercase' },
 })

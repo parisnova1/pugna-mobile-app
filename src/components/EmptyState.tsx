@@ -12,7 +12,7 @@ export default function EmptyState({ message, ctaLabel, onPress }: { message: st
 }
 
 const styles = StyleSheet.create({
-  container: { backgroundColor: CARD, borderWidth: 1, borderColor: BORDER, borderRadius: 4, padding: 28, alignItems: 'center' },
+  container: { backgroundColor: CARD, borderWidth: 1, borderColor: BORDER, borderRadius: 16, padding: 28, alignItems: 'center' },
   message: { fontFamily: FONT_BODY, fontSize: 14, color: MUTED, textAlign: 'center', marginBottom: 16 },
   cta: { paddingVertical: 10, paddingHorizontal: 20 },
 })

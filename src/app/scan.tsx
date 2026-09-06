@@ -7,7 +7,7 @@ import { apiFetch } from '@/lib/api'
 import { extractEventIdentifier } from '@/lib/parsePugnaUrl'
 import { useLanguage } from '@/i18n/LanguageContext'
 import Button from '@/components/Button'
-import { TEXT, BORDER, MUTED, BG, INPUT_BG, MODAL_SCRIM, FONT_DISPLAY, FONT_BODY } from '@/theme'
+import { TEXT, BORDER, MUTED, BG, INPUT_BG, MODAL_SCRIM, FONT_DISPLAY, FONT_BODY, FONT_BODY_MEDIUM } from '@/theme'
 
 export default function ScanScreen() {
   const { t } = useLanguage()
@@ -96,7 +96,7 @@ const styles = StyleSheet.create({
   scanHint: { fontFamily: FONT_DISPLAY, fontSize: 13, color: TEXT, textTransform: 'uppercase', backgroundColor: MODAL_SCRIM, paddingVertical: 8, paddingHorizontal: 16, borderRadius: 4 },
   centerFill: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 28 },
   title: { fontFamily: FONT_DISPLAY, fontSize: 22, textTransform: 'uppercase', color: TEXT, marginBottom: 12, textAlign: 'center' },
-  errorText: { fontFamily: FONT_BODY, fontSize: 14, fontWeight: '700', color: TEXT, textAlign: 'center', marginBottom: 8 },
+  errorText: { fontFamily: FONT_BODY_MEDIUM, fontSize: 14, color: TEXT, textAlign: 'center', marginBottom: 8 },
   manualForm: { width: '100%', marginTop: 24 },
   label: { fontFamily: FONT_DISPLAY, fontSize: 11, letterSpacing: 1.5, color: MUTED, textTransform: 'uppercase', marginBottom: 6 },
   input: { backgroundColor: INPUT_BG, borderWidth: 1, borderColor: BORDER, color: TEXT, padding: 14, fontFamily: FONT_BODY, fontSize: 14, borderRadius: 4 },

@@ -1,6 +1,5 @@
 import { Pressable, Text, View, StyleSheet, type StyleProp, type ViewStyle } from 'react-native'
-import GlassSurface from './glass/GlassSurface'
-import { TEXT, FONT_DISPLAY_BOLD, SURFACE_BORDER } from '@/theme'
+import { ACCENT, ON_ACCENT, TEXT, FONT_DISPLAY_BOLD, SURFACE_BORDER } from '@/theme'
 
 type Props = {
   label: string
@@ -15,47 +14,39 @@ type Props = {
   style?: StyleProp<ViewStyle>
 }
 
-// Pill-shaped by default — mirrors the web app's global `button { border-radius: 9999px }` rule.
-// Primary is a real frosted-glass surface (GlassSurface); outline/ghost stay flat — a
-// button-sized blur adds little once there's no solid fill to distinguish it from.
+// Signal Graphite reserves glass/blur for chrome (bars, sheets, chips) —
+// the one primary action per screen is a flat, solid signal-red fill
+// instead, so it reads unmistakably as "the thing to press" rather than
+// blending into the same frosted treatment as everything around it.
 export default function Button({ label, onPress, variant = 'primary', disabled, uppercase = true, style }: Props) {
-  const labelStyle = [styles.label, !uppercase && styles.labelSentenceCase]
+  const labelStyle = [
+    styles.label,
+    !uppercase && styles.labelSentenceCase,
+    variant === 'primary' && styles.labelOnAccent,
+  ]
   return (
     <Pressable
       onPress={onPress}
       disabled={disabled}
       style={({ pressed }) => [style, pressed && styles.pressed, disabled && styles.disabled]}
     >
-      {variant === 'primary' ? (
-        <GlassSurface variant="pill" strong interactive style={[styles.base, styles.primaryShadow]}>
-          <Text style={labelStyle}>{label}</Text>
-        </GlassSurface>
-      ) : (
-        <View style={[styles.base, variant === 'outline' && styles.outline]}>
-          <Text style={labelStyle}>{label}</Text>
-        </View>
-      )}
+      <View style={[styles.base, variant === 'primary' && styles.primary, variant === 'outline' && styles.outline]}>
+        <Text style={labelStyle}>{label}</Text>
+      </View>
     </Pressable>
   )
 }
 
 const styles = StyleSheet.create({
   base: {
-    height: 52,
-    borderRadius: 9999,
+    height: 56,
+    borderRadius: 14,
     paddingHorizontal: 28,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  primary: { backgroundColor: ACCENT },
   outline: { borderWidth: 1, borderColor: SURFACE_BORDER },
-  // Spec's primary-button elevation: `0 8px 24px rgba(0,0,0,0.45)`.
-  primaryShadow: {
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.45,
-    shadowRadius: 24,
-    elevation: 8,
-  },
   label: {
     fontFamily: FONT_DISPLAY_BOLD,
     fontSize: 13,
@@ -63,7 +54,8 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     color: TEXT,
   },
-  labelSentenceCase: { textTransform: 'none', letterSpacing: 0, fontSize: 16 },
+  labelOnAccent: { color: ON_ACCENT },
+  labelSentenceCase: { textTransform: 'none', letterSpacing: 0, fontSize: 16.5 },
   pressed: { opacity: 0.75 },
   disabled: { opacity: 0.5 },
 })

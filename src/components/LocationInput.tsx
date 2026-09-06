@@ -88,9 +88,9 @@ export default function LocationInput({
 }
 
 const styles = StyleSheet.create({
-  input: { backgroundColor: INPUT_BG, borderWidth: 1, borderColor: BORDER, color: TEXT, padding: 14, paddingRight: 40, fontFamily: FONT_BODY, fontSize: 15, borderRadius: 4 },
+  input: { backgroundColor: INPUT_BG, borderWidth: 1, borderColor: BORDER, color: TEXT, padding: 14, paddingRight: 40, fontFamily: FONT_BODY, fontSize: 15, borderRadius: 12 },
   spinner: { position: 'absolute', right: 14, top: 14 },
-  dropdown: { backgroundColor: CARD, borderWidth: 1, borderColor: BORDER, borderRadius: 4, marginTop: 4, overflow: 'hidden' },
+  dropdown: { backgroundColor: CARD, borderWidth: 1, borderColor: BORDER, borderRadius: 12, marginTop: 4, overflow: 'hidden' },
   option: { padding: 12, borderBottomWidth: 1, borderBottomColor: BORDER },
   optionLast: { borderBottomWidth: 0 },
   optionText: { fontFamily: FONT_BODY, fontSize: 13, color: TEXT },

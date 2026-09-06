@@ -112,7 +112,7 @@ function DiscoverScreenInner() {
         </Pressable>
 
         {!user && (
-          <Pressable style={styles.joinCard} onPress={() => router.push('/(auth)/signup')}>
+          <Pressable style={styles.joinCard} onPress={() => router.push({ pathname: '/(auth)/account', params: { mode: 'register' } })}>
             <Text style={styles.joinTitle}>{t('header.joinPugna')}</Text>
             <Icon name="arrowForward" size={18} color={ON_ACCENT} />
           </Pressable>

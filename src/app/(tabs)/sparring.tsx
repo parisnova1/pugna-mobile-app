@@ -9,7 +9,7 @@ import Spinner from '@/components/Spinner'
 import EmptyState from '@/components/EmptyState'
 import Button from '@/components/Button'
 import ErrorBoundary from '@/components/ErrorBoundary'
-import { TEXT, CARD, BORDER, MUTED, INPUT_BG, MODAL_SCRIM, FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_BODY } from '@/theme'
+import { TEXT, CARD, BORDER, MUTED, INPUT_BG, MODAL_SCRIM, FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_BODY, FONT_BODY_MEDIUM } from '@/theme'
 
 type SparringSession = { id: number; club_id: number; location: string; date: string; time: string; weight_range: string; level: string; spots: number; discipline: string; host_name: string; registered_fighters: number; message: string; accepting_requests: number }
 
@@ -100,7 +100,7 @@ function SparringScreenInner() {
                     label={closed ? t('sparring.closed') : full ? t('sparring.full') : t('sparring.join')}
                     variant="outline"
                     disabled={closed || full}
-                    onPress={() => (user ? setJoinTarget(s) : router.push({ pathname: '/(auth)/login', params: { role: 'club' } }))}
+                    onPress={() => (user ? setJoinTarget(s) : router.push({ pathname: '/(auth)/account', params: { mode: 'login', role: 'club' } }))}
                   />
                 )}
               </View>
@@ -193,5 +193,5 @@ const styles = StyleSheet.create({
   modalMeta: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 12, letterSpacing: 0.6, color: MUTED, textTransform: 'uppercase', marginBottom: 20 },
   label: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 11, letterSpacing: 1, color: MUTED, textTransform: 'uppercase', marginBottom: 6 },
   input: { backgroundColor: INPUT_BG, borderWidth: 1, borderColor: BORDER, color: TEXT, padding: 12, borderRadius: 4, fontFamily: FONT_BODY, fontSize: 14, marginBottom: 14 },
-  errorText: { fontFamily: FONT_BODY, fontSize: 13, fontWeight: '700', color: TEXT, marginBottom: 8 },
+  errorText: { fontFamily: FONT_BODY_MEDIUM, fontSize: 13, color: TEXT, marginBottom: 8 },
 })

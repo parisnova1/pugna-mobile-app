@@ -1,6 +1,6 @@
 import { Pressable, Text, StyleSheet, type StyleProp, type ViewStyle } from 'react-native'
 import { Icon, type IconName } from './icons/Icon'
-import { ACCENT, ON_ACCENT, BORDER, MUTED, FONT_DISPLAY_BOLD } from '@/theme'
+import { TEXT, ON_ACCENT, SURFACE, SURFACE_BORDER, FONT_DISPLAY, FONT_BODY_MEDIUM } from '@/theme'
 
 // Extracted from what every discipline/filter chip in the app already
 // hand-rolled inline (events.tsx, clubs.tsx, onboarding/interests.tsx) —
@@ -21,15 +21,25 @@ export default function Chip({
 }) {
   return (
     <Pressable onPress={onPress} style={[styles.chip, selected && styles.chipActive, style]}>
-      {icon && <Icon name={icon} size={16} color={selected ? ON_ACCENT : MUTED} />}
+      {icon && <Icon name={icon} size={16} color={selected ? ON_ACCENT : TEXT} />}
       <Text style={[styles.label, selected && styles.labelActive]}>{label}</Text>
     </Pressable>
   )
 }
 
 const styles = StyleSheet.create({
-  chip: { flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderColor: BORDER, borderRadius: 9999, paddingVertical: 9, paddingHorizontal: 16 },
-  chipActive: { backgroundColor: ACCENT, borderColor: ACCENT },
-  label: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 12, letterSpacing: 0.8, color: MUTED, textTransform: 'uppercase' },
-  labelActive: { color: ON_ACCENT },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderRadius: 9999,
+    paddingVertical: 9,
+    paddingHorizontal: 16,
+    backgroundColor: SURFACE,
+    borderWidth: 1,
+    borderColor: SURFACE_BORDER,
+  },
+  chipActive: { backgroundColor: TEXT, borderColor: TEXT },
+  label: { fontFamily: FONT_BODY_MEDIUM, fontSize: 13, color: TEXT },
+  labelActive: { fontFamily: FONT_DISPLAY, color: ON_ACCENT },
 })

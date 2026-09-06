@@ -3,40 +3,43 @@
 // here instead of per-file duplication, since native styling isn't
 // inline-CSS-in-JSX the same way the web app's is.
 //
-// Dark OLED "Liquid Glass" theme: true-black background, white text,
-// translucent frosted-glass surfaces with a white top-edge specular
-// highlight. Color stays reserved for meaning, same discipline as the prior
-// monochrome theme — general UI (buttons, active nav state, borders) is
-// white-on-black glass, not a saturated brand hue. The only real hues are
-// LIVE_RED / CAUTION_AMBER / POSITIVE_GREEN, used only where they signal a
-// status (a live bout, an injury pull-out, an accepted nomination).
-export const BG = '#000000'
-export const CARD = '#111114'
-export const BORDER = 'rgba(255,255,255,0.14)'
-export const MUTED = '#A1A1A6'
-export const TEXT = '#F5F5F7'
-export const ACCENT = '#ffffff'
-export const ON_ACCENT = '#000000'
-export const INPUT_BG = '#111114'
+// "Signal Graphite" theme (locked palette): near-black void background,
+// warm off-white text, a single signal-red accent reserved for the one
+// primary action per screen and for live/status indicators. Glass/blur is
+// reserved for chrome — top bars, tab bar, sheets, chips — never for
+// primary buttons, which are solid signal fill so they read unmistakably
+// as "the one thing to press."
+export const BG = '#0B0C0E' // void
+export const CARD = '#14161A' // panel
+export const BORDER = 'rgba(255,255,255,0.08)'
+export const MUTED = '#8A8580' // mute
+export const TEXT = '#F4F1EC' // type
+export const ACCENT = '#DC3A2C' // signal
+export const ON_ACCENT = '#0B0C0E' // onSignal — dark text on signal-red fills
+export const INPUT_BG = '#14161A'
 
 // Glass surface tokens, for the small set of high-visibility surfaces that
-// get a real blur treatment (primary buttons, drawer active row, tab bar,
-// modal sheets) rather than the flat CARD/BORDER treatment ordinary list
-// rows use — see components/glass/GlassSurface.tsx.
-export const SURFACE = '#111114'
-export const SURFACE_STRONG = 'rgba(255,255,255,0.08)'
-export const SURFACE_BORDER = 'rgba(255,255,255,0.16)'
-export const SPECULAR = 'rgba(255,255,255,0.55)'
-export const BLUR_INTENSITY = 40
-export const MODAL_SCRIM = 'rgba(0,0,0,0.6)'
+// get a real blur treatment (drawer active row, tab bar, modal sheets,
+// chips) rather than the flat CARD/BORDER treatment ordinary list rows
+// use — see components/glass/GlassSurface.tsx.
+export const SURFACE = 'rgba(20,22,26,0.64)' // glass fill
+export const SURFACE_STRONG = 'rgba(20,22,26,0.82)'
+export const SURFACE_BORDER = 'rgba(255,255,255,0.10)'
+export const SPECULAR = 'rgba(255,255,255,0.10)'
+export const BLUR_INTENSITY = 30
+export const MODAL_SCRIM = 'rgba(11,12,14,0.55)'
+export const GLASS = 'rgba(20,22,26,0.64)'
 
-// Semantic status colors — the only hue in the app.
-export const LIVE_RED = '#FF3B30'
+// Semantic status colors. LIVE reuses the signal red itself — there is only
+// one red in this palette. Amber/green stay for delay/positive states that
+// need to read differently from both "live" and plain muted text.
+export const LIVE_RED = '#DC3A2C'
 export const CAUTION_AMBER = '#ff9f0a'
 export const POSITIVE_GREEN = '#30d158'
 
-export const FONT_DISPLAY = 'Geist_900Black'
+export const FONT_DISPLAY = 'Geist_600SemiBold'
 export const FONT_DISPLAY_BOLD = 'Geist_700Bold'
 export const FONT_BODY = 'Geist_400Regular'
 export const FONT_BODY_MEDIUM = 'Geist_500Medium'
 export const FONT_MONO = 'GeistMono_400Regular'
+export const FONT_MONO_MEDIUM = 'GeistMono_500Medium'

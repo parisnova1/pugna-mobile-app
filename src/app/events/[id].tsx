@@ -15,7 +15,7 @@ import Button from '@/components/Button'
 import BracketView, { type Bout } from '@/components/Bracket'
 import DaySwitcher, { type EventDay } from '@/components/DaySwitcher'
 import ErrorBoundary from '@/components/ErrorBoundary'
-import { ACCENT, ON_ACCENT, TEXT, CARD, BORDER, MUTED, BG, INPUT_BG, LIVE_RED, CAUTION_AMBER, MODAL_SCRIM, FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_BODY } from '@/theme'
+import { ACCENT, ON_ACCENT, TEXT, CARD, BORDER, MUTED, BG, INPUT_BG, LIVE_RED, CAUTION_AMBER, MODAL_SCRIM, SURFACE, SURFACE_BORDER, FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_BODY_MEDIUM, FONT_MONO_MEDIUM, FONT_BODY } from '@/theme'
 
 type EventInfo = {
   id: number; name: string; date: string; location: string; venue: string; discipline: string; status: string
@@ -133,7 +133,14 @@ function EventDetailScreenInner() {
   }
 
   const toggleSave = async () => {
-    if (!user) { router.push('/login'); return }
+    // Guest tapping Follow — the spec's "Follow sheet" flow: send them to
+    // register as a viewer, carrying `next` back to this exact card and
+    // `followEventId` so account.tsx follows it automatically on success,
+    // landing them straight back here rather than on some generic home.
+    if (!user) {
+      router.push({ pathname: '/(auth)/account', params: { mode: 'register', role: 'viewer', next: `/events/${id}`, followEventId: String(id) } })
+      return
+    }
     setSaveBusy(true)
     try {
       if (saved) { await apiFetch(`/api/public/events/${id}/save`, { method: 'DELETE' }); setSaved(false) }
@@ -197,10 +204,12 @@ function EventDetailScreenInner() {
   }
 
   const tabs: Tab[] = event.format === 'card' ? ['overview', 'fightcard'] : ['overview', 'fightcard', 'fighters']
+  const showFollow = !user || user.role === 'viewer'
+  const showStream = !!event.livestream_url
 
   return (
     <Screen>
-      <ScrollView contentContainerStyle={styles.scroll} stickyHeaderIndices={[2]}>
+      <ScrollView style={styles.scrollFlex} contentContainerStyle={styles.scroll} stickyHeaderIndices={[2]}>
         <BackButton />
 
         <View style={styles.hero}>
@@ -210,14 +219,8 @@ function EventDetailScreenInner() {
           <Text style={styles.organizer}>{event.organizer_name}</Text>
 
           <View style={styles.actionRow}>
-            {(!user || user.role === 'viewer') && (
-              <ActionButton icon="bookmark" filled={saved} label={saved ? t('eventDetail.saved') : t('eventDetail.save')} active={saved} disabled={saveBusy} onPress={toggleSave} />
-            )}
             <ActionButton icon="share" label={t('eventDetail.share')} onPress={handleShare} />
             <ActionButton icon="calendarMark" label={t('eventDetail.addToCalendar')} onPress={handleAddToCalendar} />
-            {!!event.livestream_url && (
-              <ActionButton icon="broadcast" label={t('eventDetail.watchLive')} onPress={() => Linking.openURL(event.livestream_url)} />
-            )}
             {user?.role === 'club' && event.status === 'Open' && event.format === 'bracket' && (
               <ActionButton icon="personAdd" label={t('eventDetail.nominate')} onPress={() => setNominating(true)} />
             )}
@@ -273,6 +276,25 @@ function EventDetailScreenInner() {
           {tab === 'fighters' && <FightersTab fighters={fighters} />}
         </View>
       </ScrollView>
+
+      {(showFollow || showStream) && (
+        <View style={styles.stickyFooter}>
+          {showFollow && (
+            <Pressable
+              style={[styles.footerPrimary, saveBusy && styles.footerDisabled]}
+              disabled={saveBusy}
+              onPress={toggleSave}
+            >
+              <Text style={styles.footerPrimaryLabel}>{t(saved ? 'eventDetail.following' : 'eventDetail.follow')}</Text>
+            </Pressable>
+          )}
+          {showStream && (
+            <Pressable style={styles.footerSecondary} onPress={() => Linking.openURL(event.livestream_url)}>
+              <Text style={styles.footerSecondaryLabel}>{t('eventDetail.watchLive')} ↗</Text>
+            </Pressable>
+          )}
+        </View>
+      )}
 
       {nominating && (
         <NominateModal eventId={String(id)} weightClasses={weightClasses} onCancel={() => setNominating(false)} onSent={() => setNominating(false)} />
@@ -517,7 +539,7 @@ function NominateModal({ eventId, weightClasses, onCancel, onSent }: { eventId: 
               ) : (
                 <View style={{ gap: 6, marginBottom: 14 }}>
                   {rosterFighters.map(f => (
-                    <Pressable key={f.id} onPress={() => setFighterId(f.id)} style={[modalStyles.row, fighterId === f.id && { borderColor: ACCENT }]}>
+                    <Pressable key={f.id} onPress={() => setFighterId(f.id)} style={[modalStyles.row, fighterId === f.id && modalStyles.rowSelected]}>
                       <Text style={modalStyles.rowTitle}>{f.name}</Text>
                       <Text style={modalStyles.rowMeta}>{f.weight} · {f.record}</Text>
                     </Pressable>
@@ -546,79 +568,87 @@ function NominateModal({ eventId, weightClasses, onCancel, onSent }: { eventId: 
 
 const modalStyles = StyleSheet.create({
   overlay: { flex: 1, backgroundColor: MODAL_SCRIM, alignItems: 'center', justifyContent: 'center', padding: 20 },
-  card: { backgroundColor: CARD, borderWidth: 1, borderColor: BORDER, borderRadius: 4, padding: 24, width: '100%', maxWidth: 480, maxHeight: '85%' },
-  title: { fontFamily: FONT_DISPLAY, fontSize: 20, textTransform: 'uppercase', color: TEXT, marginBottom: 16 },
-  label: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 11, letterSpacing: 1, color: MUTED, textTransform: 'uppercase', marginBottom: 6 },
+  card: { backgroundColor: CARD, borderRadius: 20, padding: 24, width: '100%', maxWidth: 480, maxHeight: '85%' },
+  title: { fontFamily: FONT_DISPLAY, fontSize: 20, color: TEXT, marginBottom: 16 },
+  label: { fontFamily: FONT_MONO_MEDIUM, fontSize: 11, letterSpacing: 0.8, color: MUTED, textTransform: 'uppercase', marginBottom: 6 },
   emptyText: { fontFamily: FONT_BODY, fontSize: 13, color: MUTED, marginBottom: 14 },
-  pill: { borderWidth: 1, borderColor: BORDER, borderRadius: 9999, paddingVertical: 6, paddingHorizontal: 12 },
+  pill: { borderWidth: 1, borderColor: SURFACE_BORDER, backgroundColor: SURFACE, borderRadius: 9999, paddingVertical: 6, paddingHorizontal: 12 },
   pillActive: { backgroundColor: ACCENT, borderColor: ACCENT },
-  pillLabel: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 12, color: TEXT, textTransform: 'uppercase' },
+  pillLabel: { fontFamily: FONT_BODY_MEDIUM, fontSize: 12.5, color: TEXT },
   pillLabelActive: { color: ON_ACCENT },
-  row: { backgroundColor: INPUT_BG, borderWidth: 1, borderColor: BORDER, borderRadius: 4, padding: 12 },
-  rowTitle: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 14, color: TEXT, textTransform: 'uppercase' },
+  row: { backgroundColor: INPUT_BG, borderRadius: 12, padding: 12, borderWidth: 1.5, borderColor: 'transparent' },
+  rowSelected: { borderColor: ACCENT },
+  rowTitle: { fontFamily: FONT_DISPLAY, fontSize: 14, color: TEXT },
   rowMeta: { fontFamily: FONT_BODY, fontSize: 12, color: MUTED, marginTop: 2 },
-  input: { backgroundColor: INPUT_BG, borderWidth: 1, borderColor: BORDER, color: TEXT, padding: 12, borderRadius: 4, fontFamily: FONT_BODY, fontSize: 14, marginBottom: 14, minHeight: 60, textAlignVertical: 'top' },
-  errorText: { fontFamily: FONT_BODY, fontSize: 13, fontWeight: '700', color: TEXT, marginBottom: 8 },
+  input: { backgroundColor: INPUT_BG, borderWidth: 1, borderColor: BORDER, color: TEXT, padding: 12, borderRadius: 12, fontFamily: FONT_BODY, fontSize: 14, marginBottom: 14, minHeight: 60, textAlignVertical: 'top' },
+  errorText: { fontFamily: FONT_BODY_MEDIUM, fontSize: 13, color: TEXT, marginBottom: 8 },
 })
 
 const styles = StyleSheet.create({
   centerFill: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
-  notFoundTitle: { fontFamily: FONT_DISPLAY, fontSize: 24, textTransform: 'uppercase', color: TEXT, marginBottom: 8 },
+  notFoundTitle: { fontFamily: FONT_DISPLAY, fontSize: 24, color: TEXT, marginBottom: 8 },
   notFoundBody: { fontFamily: FONT_BODY, fontSize: 14, color: MUTED, textAlign: 'center' },
+  scrollFlex: { flex: 1 },
   scroll: { paddingBottom: 40 },
   hero: { paddingHorizontal: 20, paddingTop: 4, paddingBottom: 20 },
-  eyebrow: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 11, letterSpacing: 2, color: ACCENT, textTransform: 'uppercase', marginTop: 16, marginBottom: 8 },
-  title: { fontFamily: FONT_DISPLAY, fontSize: 28, textTransform: 'uppercase', color: TEXT, lineHeight: 30, marginBottom: 8 },
-  venue: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 13, letterSpacing: 0.6, color: MUTED, textTransform: 'uppercase' },
-  organizer: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 13, letterSpacing: 0.6, color: MUTED, textTransform: 'uppercase', marginTop: 2 },
+  eyebrow: { fontFamily: FONT_MONO_MEDIUM, fontSize: 11, letterSpacing: 1.2, color: ACCENT, textTransform: 'uppercase', marginTop: 16, marginBottom: 8 },
+  title: { fontFamily: FONT_DISPLAY, fontSize: 28, color: TEXT, lineHeight: 32, marginBottom: 8 },
+  venue: { fontFamily: FONT_MONO_MEDIUM, fontSize: 12, letterSpacing: 0.4, color: MUTED, textTransform: 'uppercase' },
+  organizer: { fontFamily: FONT_MONO_MEDIUM, fontSize: 12, letterSpacing: 0.4, color: MUTED, textTransform: 'uppercase', marginTop: 2 },
   actionRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 16 },
-  actionButton: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: CARD, borderWidth: 1, borderColor: BORDER, borderRadius: 9999, paddingVertical: 8, paddingHorizontal: 14 },
+  actionButton: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: SURFACE, borderWidth: 1, borderColor: SURFACE_BORDER, borderRadius: 9999, paddingVertical: 8, paddingHorizontal: 14 },
   actionButtonActive: { backgroundColor: ACCENT, borderColor: ACCENT },
-  actionLabel: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 11, letterSpacing: 0.6, color: TEXT, textTransform: 'uppercase' },
-  liveCard: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: CARD, borderWidth: 1, borderColor: LIVE_RED, borderRadius: 4, padding: 14, marginTop: 16 },
+  actionLabel: { fontFamily: FONT_MONO_MEDIUM, fontSize: 11, letterSpacing: 0.4, color: TEXT, textTransform: 'uppercase' },
+  liveCard: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: CARD, borderRadius: 18, padding: 14, marginTop: 16 },
   liveDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: LIVE_RED },
-  liveLabel: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 11, letterSpacing: 1, color: LIVE_RED, textTransform: 'uppercase' },
-  liveFighters: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 13, color: TEXT, textTransform: 'uppercase', flex: 1, textAlign: 'right' },
-  liveVs: { color: MUTED },
-  // Brighter border + a dot (mirroring liveCard/liveDot) than a plain neutral
-  // outline — a low-light venue needs NEXT to read as its own state, not
-  // blend into every other bordered card on the screen.
-  nextCard: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: CARD, borderWidth: 1, borderColor: 'rgba(255,255,255,0.4)', borderRadius: 4, padding: 14, marginTop: 10 },
+  liveLabel: { fontFamily: FONT_MONO_MEDIUM, fontSize: 11, letterSpacing: 1, color: LIVE_RED, textTransform: 'uppercase' },
+  liveFighters: { fontFamily: FONT_DISPLAY, fontSize: 14, color: TEXT, flex: 1, textAlign: 'right' },
+  liveVs: { color: MUTED, fontFamily: FONT_BODY },
+  // A dot (mirroring liveCard/liveDot) instead of a plain neutral outline —
+  // a low-light venue needs NEXT to read as its own state, not blend into
+  // every other panel on the screen.
+  nextCard: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: CARD, borderRadius: 16, padding: 14, marginTop: 10 },
   nextDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: TEXT },
-  intermissionCard: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: CARD, borderWidth: 1, borderColor: CAUTION_AMBER, borderRadius: 4, padding: 14, marginTop: 16 },
-  intermissionLabel: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 11, letterSpacing: 1, color: CAUTION_AMBER, textTransform: 'uppercase' },
+  intermissionCard: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: CARD, borderRadius: 18, padding: 14, marginTop: 16 },
+  intermissionLabel: { fontFamily: FONT_MONO_MEDIUM, fontSize: 11, letterSpacing: 1, color: CAUTION_AMBER, textTransform: 'uppercase' },
   intermissionNote: { fontFamily: FONT_BODY, fontSize: 13, color: TEXT, flex: 1, textAlign: 'right' },
-  nextLabel: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 11, letterSpacing: 1, color: TEXT, textTransform: 'uppercase' },
-  tabBar: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: BORDER, backgroundColor: CARD, paddingHorizontal: 12 },
+  nextLabel: { fontFamily: FONT_MONO_MEDIUM, fontSize: 11, letterSpacing: 1, color: TEXT, textTransform: 'uppercase' },
+  tabBar: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: BORDER, backgroundColor: BG, paddingHorizontal: 12 },
   tabButton: { paddingVertical: 14, paddingHorizontal: 12 },
-  tabLabel: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 13, letterSpacing: 0.8, color: MUTED, textTransform: 'uppercase' },
+  tabLabel: { fontFamily: FONT_MONO_MEDIUM, fontSize: 12, letterSpacing: 0.6, color: MUTED, textTransform: 'uppercase' },
   tabLabelActive: { color: TEXT },
   tabIndicator: { height: 2, backgroundColor: ACCENT, marginTop: 8, borderRadius: 1 },
   tabContent: { padding: 20 },
-  sectionLabel: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 11, letterSpacing: 2, color: ACCENT, textTransform: 'uppercase', marginBottom: 10 },
+  sectionLabel: { fontFamily: FONT_MONO_MEDIUM, fontSize: 11, letterSpacing: 1.4, color: ACCENT, textTransform: 'uppercase', marginBottom: 10 },
   aboutBody: { fontFamily: FONT_BODY, fontSize: 14, lineHeight: 22, color: MUTED, marginBottom: 24 },
-  detailsCard: { backgroundColor: CARD, borderWidth: 1, borderColor: BORDER, borderRadius: 4 },
-  detailsHeader: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 11, letterSpacing: 2, color: ACCENT, textTransform: 'uppercase', padding: 16, borderBottomWidth: 1, borderBottomColor: BORDER },
+  detailsCard: { backgroundColor: CARD, borderRadius: 16, overflow: 'hidden' },
+  detailsHeader: { fontFamily: FONT_MONO_MEDIUM, fontSize: 11, letterSpacing: 1.4, color: ACCENT, textTransform: 'uppercase', padding: 16, borderBottomWidth: 1, borderBottomColor: BORDER },
   detailRow: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: BORDER },
-  detailKey: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 11, letterSpacing: 1, color: MUTED, textTransform: 'uppercase' },
-  detailValue: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 13, color: TEXT, textTransform: 'uppercase' },
-  emptyBox: { backgroundColor: CARD, borderWidth: 1, borderColor: BORDER, borderRadius: 4, padding: 24, textAlign: 'center', fontFamily: FONT_DISPLAY_BOLD, fontSize: 13, color: MUTED, textTransform: 'uppercase' },
+  detailKey: { fontFamily: FONT_MONO_MEDIUM, fontSize: 11, letterSpacing: 0.6, color: MUTED, textTransform: 'uppercase' },
+  detailValue: { fontFamily: FONT_BODY_MEDIUM, fontSize: 13, color: TEXT },
+  emptyBox: { backgroundColor: CARD, borderRadius: 16, padding: 24, textAlign: 'center', fontFamily: FONT_MONO_MEDIUM, fontSize: 12, color: MUTED, textTransform: 'uppercase' },
   pillRow: { gap: 8, marginBottom: 20 },
-  pill: { borderWidth: 1, borderColor: BORDER, borderRadius: 9999, paddingVertical: 9, paddingHorizontal: 16 },
-  pillActive: { backgroundColor: CARD, borderColor: ACCENT },
-  pillLabel: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 12, letterSpacing: 0.6, color: MUTED, textTransform: 'uppercase' },
-  pillLabelActive: { color: TEXT },
-  boutCard: { backgroundColor: CARD, borderWidth: 1, borderColor: BORDER, borderRadius: 4, padding: 18 },
+  pill: { borderWidth: 1, borderColor: SURFACE_BORDER, backgroundColor: SURFACE, borderRadius: 9999, paddingVertical: 9, paddingHorizontal: 16 },
+  pillActive: { backgroundColor: TEXT, borderColor: TEXT },
+  pillLabel: { fontFamily: FONT_BODY_MEDIUM, fontSize: 13, color: MUTED },
+  pillLabelActive: { fontFamily: FONT_DISPLAY, color: ON_ACCENT },
+  boutCard: { backgroundColor: CARD, borderRadius: 18, padding: 18 },
   boutTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 8 },
-  positionTag: { borderWidth: 1, borderColor: BORDER, borderRadius: 4, paddingVertical: 4, paddingHorizontal: 10 },
-  positionTagText: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 10, letterSpacing: 1.2, color: MUTED, textTransform: 'uppercase' },
-  boutMeta: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 11, color: MUTED, textTransform: 'uppercase' },
+  positionTag: { borderWidth: 1, borderColor: SURFACE_BORDER, borderRadius: 999, paddingVertical: 4, paddingHorizontal: 10 },
+  positionTagText: { fontFamily: FONT_MONO_MEDIUM, fontSize: 10, letterSpacing: 1, color: MUTED, textTransform: 'uppercase' },
+  boutMeta: { fontFamily: FONT_MONO_MEDIUM, fontSize: 11, color: MUTED, textTransform: 'uppercase' },
   matchupRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  fighterName: { fontFamily: FONT_DISPLAY, fontSize: 17, textTransform: 'uppercase', color: TEXT, lineHeight: 19 },
+  fighterName: { fontFamily: FONT_DISPLAY, fontSize: 17, color: TEXT, lineHeight: 20 },
   fighterRecord: { fontFamily: FONT_BODY, fontSize: 12, color: MUTED, marginTop: 3 },
-  vs: { fontFamily: FONT_DISPLAY, fontSize: 16, color: ACCENT },
-  fighterRow: { backgroundColor: CARD, borderWidth: 1, borderColor: BORDER, borderRadius: 4, padding: 16 },
-  fighterRowName: { fontFamily: FONT_DISPLAY, fontSize: 17, textTransform: 'uppercase', color: TEXT },
-  fighterRowMeta: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 11, letterSpacing: 0.6, color: MUTED, textTransform: 'uppercase', marginTop: 3 },
+  vs: { fontFamily: FONT_DISPLAY, fontSize: 15, color: MUTED },
+  fighterRow: { backgroundColor: CARD, borderRadius: 16, padding: 16 },
+  fighterRowName: { fontFamily: FONT_DISPLAY, fontSize: 17, color: TEXT },
+  fighterRowMeta: { fontFamily: FONT_MONO_MEDIUM, fontSize: 11, letterSpacing: 0.4, color: MUTED, textTransform: 'uppercase', marginTop: 3 },
   fighterRowRecord: { fontFamily: FONT_BODY, fontSize: 12, color: MUTED, marginTop: 6 },
+  stickyFooter: { flexDirection: 'row', gap: 10, padding: 16, paddingBottom: 34, backgroundColor: CARD, borderTopWidth: 1, borderTopColor: BORDER },
+  footerPrimary: { flex: 1, height: 54, borderRadius: 14, backgroundColor: ACCENT, alignItems: 'center', justifyContent: 'center' },
+  footerPrimaryLabel: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 16, color: ON_ACCENT },
+  footerDisabled: { opacity: 0.6 },
+  footerSecondary: { width: 132, height: 54, borderRadius: 14, backgroundColor: SURFACE, borderWidth: 1, borderColor: SURFACE_BORDER, alignItems: 'center', justifyContent: 'center' },
+  footerSecondaryLabel: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 15, color: TEXT },
 })

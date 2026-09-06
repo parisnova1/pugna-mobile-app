@@ -3,18 +3,21 @@ import { Ionicons } from '@expo/vector-icons'
 import {
   Geist_400Regular,
   Geist_500Medium,
+  Geist_600SemiBold,
   Geist_700Bold,
   Geist_900Black,
 } from '@expo-google-fonts/geist'
-import { GeistMono_400Regular } from '@expo-google-fonts/geist-mono'
+import { GeistMono_400Regular, GeistMono_500Medium } from '@expo-google-fonts/geist-mono'
 
 export function useAppFonts() {
   return useFonts({
     Geist_400Regular,
     Geist_500Medium,
+    Geist_600SemiBold,
     Geist_700Bold,
     Geist_900Black,
     GeistMono_400Regular,
+    GeistMono_500Medium,
     // The app's own icon set (components/icons/Icon.tsx) is plain SVG, but
     // GoogleSignInButton's official Google "G" glyph still comes from
     // <Ionicons name="logo-google"/>. That glyph renders via a web font that

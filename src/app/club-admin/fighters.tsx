@@ -7,7 +7,7 @@ import Spinner from '@/components/Spinner'
 import EmptyState from '@/components/EmptyState'
 import Button from '@/components/Button'
 import ErrorBoundary from '@/components/ErrorBoundary'
-import { TEXT, CARD, BORDER, MUTED, INPUT_BG, ACCENT, ON_ACCENT, MODAL_SCRIM, FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_BODY } from '@/theme'
+import { TEXT, CARD, BORDER, MUTED, INPUT_BG, ACCENT, ON_ACCENT, MODAL_SCRIM, FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_BODY, FONT_BODY_MEDIUM } from '@/theme'
 
 type RosterFighter = { id: number; name: string; weight: string; record: string }
 type Nomination = { id: number; status: 'pending' | 'accepted' | 'rejected'; event_name: string; weight_class_name: string; fighter_name: string }
@@ -173,5 +173,5 @@ const styles = StyleSheet.create({
   modalTitle: { fontFamily: FONT_DISPLAY, fontSize: 20, textTransform: 'uppercase', color: TEXT, marginBottom: 16 },
   label: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 11, letterSpacing: 1, color: MUTED, textTransform: 'uppercase', marginBottom: 6 },
   input: { backgroundColor: INPUT_BG, borderWidth: 1, borderColor: BORDER, color: TEXT, padding: 12, borderRadius: 4, fontFamily: FONT_BODY, fontSize: 14 },
-  errorText: { fontFamily: FONT_BODY, fontSize: 13, fontWeight: '700', color: TEXT, marginBottom: 8 },
+  errorText: { fontFamily: FONT_BODY_MEDIUM, fontSize: 13, color: TEXT, marginBottom: 8 },
 })

@@ -4,13 +4,13 @@ import type { IconName } from '@/components/icons/Icon'
 // Matches the backend's enforced vocabulary exactly (server/src/constants.js)
 // — extracted here instead of duplicated across events.tsx, clubs.tsx, and
 // onboarding/interests.tsx (each previously had its own inline copy).
-//
-// TODO: confirm with product whether Judo/Karate/"Andere" should be added —
-// an earlier onboarding redesign brief asked for them, but they aren't in
-// the backend's DISCIPLINES enum. Keeping this list backend-only means every
-// chip built from it can actually match a real event/fighter/club
-// server-side, rather than a chip that can never match anything.
-export const DISCIPLINES = ['Boxing', 'Kickboxing', 'Muay Thai', 'MMA', 'BJJ', 'Wrestling']
+export const ALL_DISCIPLINES = ['Boxing', 'Kickboxing', 'Muay Thai', 'MMA', 'BJJ', 'Wrestling']
+
+// Product scope for now: boxing only. Every discipline picker/filter in the
+// app builds its options from this list, not ALL_DISCIPLINES — flip back to
+// ALL_DISCIPLINES here (a single line) once other disciplines come online,
+// rather than re-adding chips screen by screen.
+export const DISCIPLINES = ['Boxing']
 
 export const DISCIPLINE_LABEL_KEY: Record<string, TranslationKey> = {
   Boxing: 'events.discipline.boxing',

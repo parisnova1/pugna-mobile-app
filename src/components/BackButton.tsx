@@ -1,20 +1,17 @@
-import { Pressable, Text, StyleSheet } from 'react-native'
+import { Pressable, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
 import { Icon } from './icons/Icon'
-import { MUTED, FONT_DISPLAY_BOLD } from '@/theme'
-import { useLanguage } from '@/i18n/LanguageContext'
+import { TEXT } from '@/theme'
 
+// Icon-only back arrow, matching the design — no "Zurück" text label.
 export default function BackButton() {
-  const { t } = useLanguage()
   return (
-    <Pressable onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} style={styles.row} hitSlop={12}>
-      <Icon name="chevronBack" size={18} color={MUTED} />
-      <Text style={styles.label}>{t('common.back')}</Text>
+    <Pressable onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} style={styles.button} hitSlop={12}>
+      <Icon name="chevronBack" size={22} color={TEXT} />
     </Pressable>
   )
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 8 },
-  label: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 13, letterSpacing: 1, textTransform: 'uppercase', color: MUTED },
+  button: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center', marginVertical: 8 },
 })

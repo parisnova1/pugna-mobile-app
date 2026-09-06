@@ -8,8 +8,9 @@ type AuthContextValue = {
   user: User | null
   ready: boolean
   login: (email: string, password: string) => Promise<User>
-  signup: (name: string, email: string, password: string, role?: Role, homeLocation?: string) => Promise<User>
+  signup: (email: string, password: string, role?: Role, homeLocation?: string) => Promise<User>
   loginWithGoogle: (idToken: string, role?: Role, homeLocation?: string) => Promise<User>
+  updateProfile: (fields: { name?: string; homeLocation?: string }) => Promise<User>
   logout: () => void
 }
 
@@ -44,10 +45,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return user
   }
 
-  const signup: AuthContextValue['signup'] = async (name, email, password, role, homeLocation) => {
+  // Registration collects only email + password + role — no name field.
+  // The backend derives a display name from the email's local part; a real
+  // name (and, for role 'club', the club's own name) is collected on the
+  // post-signup Fields step instead, which is skippable.
+  const signup: AuthContextValue['signup'] = async (email, password, role, homeLocation) => {
     const { token, user } = await apiFetch<{ token: string; user: User }>('/api/auth/signup', {
       method: 'POST',
-      body: JSON.stringify({ name, email, password, role, homeLocation }),
+      body: JSON.stringify({ email, password, role, homeLocation }),
     })
     await setToken(token)
     setUser(user)
@@ -66,12 +71,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return user
   }
 
+  const updateProfile: AuthContextValue['updateProfile'] = async fields => {
+    const { user: updated } = await apiFetch<{ user: User }>('/api/auth/me', {
+      method: 'PATCH',
+      body: JSON.stringify(fields),
+    })
+    setUser(updated)
+    return updated
+  }
+
   const logout = () => {
     setToken(null)
     setUser(null)
   }
 
-  return <AuthContext.Provider value={{ user, ready, login, signup, loginWithGoogle, logout }}>{children}</AuthContext.Provider>
+  return <AuthContext.Provider value={{ user, ready, login, signup, loginWithGoogle, updateProfile, logout }}>{children}</AuthContext.Provider>
 }
 
 export function useAuth() {

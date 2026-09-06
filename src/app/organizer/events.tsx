@@ -10,14 +10,13 @@ import EmptyState from '@/components/EmptyState'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import Button from '@/components/Button'
 import DatePickerField from '@/components/DatePickerField'
-import { ACCENT, ON_ACCENT, CARD, BORDER, MUTED, TEXT, INPUT_BG, MODAL_SCRIM, FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_BODY } from '@/theme'
+import { ACCENT, ON_ACCENT, CARD, BORDER, MUTED, TEXT, INPUT_BG, MODAL_SCRIM, FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_BODY, FONT_BODY_MEDIUM } from '@/theme'
+import { DISCIPLINES } from '@/lib/disciplines'
 
 export type OrganizerEvent = {
   id: number; name: string; date: string; location: string; venue: string; discipline: string
   format: 'bracket' | 'card'; status: string
 }
-
-const DISCIPLINES = ['Boxing', 'Kickboxing', 'Muay Thai', 'MMA', 'BJJ', 'Wrestling']
 
 export default function OrganizerEventsScreen() {
   return <ErrorBoundary><OrganizerEventsInner /></ErrorBoundary>
@@ -250,5 +249,5 @@ const styles = StyleSheet.create({
   pillLabel: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 11, letterSpacing: 0.6, color: MUTED, textTransform: 'uppercase' },
   pillLabelActive: { color: ON_ACCENT },
   lockedNote: { fontFamily: FONT_BODY, fontSize: 12, color: MUTED },
-  errorText: { fontFamily: FONT_BODY, fontSize: 13, fontWeight: '700', color: TEXT, marginBottom: 8 },
+  errorText: { fontFamily: FONT_BODY_MEDIUM, fontSize: 13, color: TEXT, marginBottom: 8 },
 })

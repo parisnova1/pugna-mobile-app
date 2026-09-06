@@ -96,7 +96,7 @@ const styles = StyleSheet.create({
   slotWinner: { backgroundColor: SURFACE_STRONG },
   slotText: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 13, color: TEXT },
   slotTextMuted: { color: MUTED, textTransform: 'uppercase' },
-  slotTextWinner: { color: TEXT, fontWeight: '800' },
+  slotTextWinner: { color: ACCENT },
   methodBadge: { position: 'absolute', right: -4, top: -10, backgroundColor: BG, borderWidth: 1, borderColor: BORDER, borderRadius: 3, paddingVertical: 1, paddingHorizontal: 6 },
   methodText: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 9, color: MUTED, textTransform: 'uppercase' },
   delayedBadge: { borderColor: CAUTION_AMBER },

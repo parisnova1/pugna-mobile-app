@@ -13,7 +13,8 @@ import Chip from '@/components/Chip'
 import { useToast } from '@/lib/toastContext'
 import { looksLikeTest } from '@/lib/testFlag'
 import { DISCIPLINES as REAL_DISCIPLINES, DISCIPLINE_LABEL_KEY, DISCIPLINE_ICON } from '@/lib/disciplines'
-import { ACCENT, ON_ACCENT, CARD, BORDER, MUTED, TEXT, INPUT_BG, FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_BODY } from '@/theme'
+import { Icon } from '@/components/icons/Icon'
+import { ACCENT, ON_ACCENT, CARD, BORDER, MUTED, TEXT, SURFACE, SURFACE_BORDER, INPUT_BG, FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_MONO_MEDIUM, FONT_BODY } from '@/theme'
 
 type PublicEvent = { id: number; name: string; date: string; location: string; discipline: string; organizer_name: string; fights: number }
 
@@ -68,7 +69,12 @@ function EventsScreenInner() {
   return (
     <Screen>
       <View style={styles.header}>
-        <Text style={styles.title}>{t('nav.events')}</Text>
+        <View style={styles.titleRow}>
+          <Text style={styles.title}>{t('nav.events')}</Text>
+          <Pressable onPress={() => router.push('/scan')} style={styles.scanButton} hitSlop={8}>
+            <Icon name="scan" size={18} color={TEXT} />
+          </Pressable>
+        </View>
         <TextInput
           value={query}
           onChangeText={setQuery}
@@ -121,18 +127,20 @@ function EventsScreenInner() {
 
 const styles = StyleSheet.create({
   header: { padding: 20, paddingBottom: 12, gap: 12 },
-  title: { fontFamily: FONT_DISPLAY, fontSize: 28, textTransform: 'uppercase', color: TEXT },
-  search: { backgroundColor: INPUT_BG, borderWidth: 1, borderColor: BORDER, color: TEXT, padding: 12, borderRadius: 4, fontFamily: FONT_BODY, fontSize: 14 },
+  titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  title: { fontFamily: FONT_DISPLAY, fontSize: 28, color: TEXT },
+  scanButton: { width: 36, height: 36, borderRadius: 10, backgroundColor: SURFACE, borderWidth: 1, borderColor: SURFACE_BORDER, alignItems: 'center', justifyContent: 'center' },
+  search: { backgroundColor: INPUT_BG, borderWidth: 1, borderColor: BORDER, color: TEXT, padding: 12, borderRadius: 12, fontFamily: FONT_BODY, fontSize: 14 },
   chipRow: { flexGrow: 0, marginBottom: 16 },
   centerFill: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   list: { paddingHorizontal: 16, paddingBottom: 24, gap: 12 },
-  card: { backgroundColor: CARD, borderWidth: 1, borderColor: BORDER, borderRadius: 4, padding: 16 },
+  card: { backgroundColor: CARD, borderRadius: 16, padding: 16 },
   badgeRow: { flexDirection: 'row', gap: 6, marginBottom: 8 },
-  cardBadge: { alignSelf: 'flex-start', backgroundColor: ACCENT, borderRadius: 4, paddingVertical: 3, paddingHorizontal: 8 },
-  cardBadgeText: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 10, letterSpacing: 1, color: ON_ACCENT, textTransform: 'uppercase' },
-  testBadge: { alignSelf: 'flex-start', borderWidth: 1, borderColor: TEXT, borderRadius: 4, paddingVertical: 2, paddingHorizontal: 8 },
-  testBadgeText: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 10, letterSpacing: 1, color: TEXT, textTransform: 'uppercase' },
-  cardMeta: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 11, letterSpacing: 1, color: MUTED, textTransform: 'uppercase', marginBottom: 4 },
-  cardTitle: { fontFamily: FONT_DISPLAY, fontSize: 19, textTransform: 'uppercase', color: TEXT, marginBottom: 6 },
-  cardSub: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 11, letterSpacing: 0.6, color: MUTED, textTransform: 'uppercase' },
+  cardBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', backgroundColor: ACCENT, borderRadius: 999, paddingVertical: 5, paddingHorizontal: 9 },
+  cardBadgeText: { fontFamily: FONT_MONO_MEDIUM, fontSize: 10.5, letterSpacing: 0.8, color: ON_ACCENT, textTransform: 'uppercase' },
+  testBadge: { alignSelf: 'flex-start', borderWidth: 1, borderColor: SURFACE_BORDER, borderRadius: 999, paddingVertical: 4, paddingHorizontal: 9 },
+  testBadgeText: { fontFamily: FONT_MONO_MEDIUM, fontSize: 10.5, letterSpacing: 0.8, color: MUTED, textTransform: 'uppercase' },
+  cardMeta: { fontFamily: FONT_MONO_MEDIUM, fontSize: 11, letterSpacing: 0.4, color: MUTED, textTransform: 'uppercase', marginBottom: 4 },
+  cardTitle: { fontFamily: FONT_DISPLAY, fontSize: 18, color: TEXT, marginBottom: 6 },
+  cardSub: { fontFamily: FONT_MONO_MEDIUM, fontSize: 11, letterSpacing: 0.4, color: MUTED, textTransform: 'uppercase' },
 })

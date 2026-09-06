@@ -9,7 +9,7 @@ import Spinner from '@/components/Spinner'
 import BackButton from '@/components/BackButton'
 import Button from '@/components/Button'
 import ErrorBoundary from '@/components/ErrorBoundary'
-import { ACCENT, TEXT, CARD, BORDER, MUTED, FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_BODY } from '@/theme'
+import { ACCENT, TEXT, CARD, BORDER, MUTED, FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_BODY, FONT_BODY_MEDIUM } from '@/theme'
 
 type Club = { id: number; name: string; location: string; disciplines: string[]; founded_year: number | null; member_count: number; description: string; logo_url: string; cover_url: string }
 
@@ -124,7 +124,7 @@ function ClubProfileScreenInner() {
 
 const styles = StyleSheet.create({
   centerFill: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
-  errorText: { fontFamily: FONT_BODY, fontSize: 14, fontWeight: '700', color: TEXT },
+  errorText: { fontFamily: FONT_BODY_MEDIUM, fontSize: 14, color: TEXT },
   scroll: { padding: 20, paddingBottom: 40 },
   cover: { width: '100%', height: 160, borderRadius: 4, marginTop: 12, marginBottom: 4 },
   headerRow: { flexDirection: 'row', alignItems: 'center', gap: 16, marginTop: 16, marginBottom: 12 },

@@ -55,8 +55,7 @@ export default function RootLayout() {
                   <Stack.Screen name="organizer" />
                   <Stack.Screen name="club-admin" />
                   <Stack.Screen name="organizer-events/[id]" />
-                  <Stack.Screen name="(auth)/login" options={{ presentation: 'modal' }} />
-                  <Stack.Screen name="(auth)/signup" options={{ presentation: 'modal' }} />
+                  <Stack.Screen name="(auth)/account" options={{ presentation: 'modal' }} />
                   <Stack.Screen name="scan" options={{ presentation: 'fullScreenModal' }} />
                 </Stack>
               </ErrorBoundary>

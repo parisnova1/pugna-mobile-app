@@ -32,7 +32,7 @@ export default function Card({
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: CARD, borderWidth: 1, borderColor: BORDER, borderRadius: 4, padding: 16 },
-  selected: { borderColor: ACCENT, borderWidth: 2 },
+  card: { backgroundColor: CARD, borderWidth: 1, borderColor: BORDER, borderRadius: 16, padding: 16 },
+  selected: { borderColor: ACCENT, borderWidth: 1.5 },
   pressed: { opacity: 0.8 },
 })

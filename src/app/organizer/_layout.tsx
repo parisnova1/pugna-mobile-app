@@ -1,5 +1,5 @@
 import { Tabs, Redirect } from 'expo-router'
-import { Icon } from '@/components/icons/Icon'
+import { makeTabBarButton } from '@/components/AppTabBarButton'
 import { useAuth } from '@/auth/AuthContext'
 import { useLanguage } from '@/i18n/LanguageContext'
 import { ACCENT, MUTED, CARD, BORDER, FONT_DISPLAY_BOLD } from '@/theme'
@@ -20,21 +20,21 @@ export default function OrganizerTabsLayout() {
         headerShown: false,
         tabBarActiveTintColor: ACCENT,
         tabBarInactiveTintColor: MUTED,
-        tabBarStyle: { backgroundColor: CARD, borderTopColor: BORDER },
+        tabBarStyle: { backgroundColor: CARD, borderTopColor: BORDER, borderTopWidth: 1, height: 84, paddingTop: 9 },
         tabBarLabelStyle: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 10, letterSpacing: 0.6, textTransform: 'uppercase' },
       }}
     >
       <Tabs.Screen
         name="index"
-        options={{ title: t('organizer.tab.overview'), tabBarIcon: ({ color, size }) => <Icon name="statsChart" size={size} color={String(color)} /> }}
+        options={{ title: t('organizer.tab.overview'), tabBarButton: makeTabBarButton('statsChart', t('organizer.tab.overview')) }}
       />
       <Tabs.Screen
         name="events"
-        options={{ title: t('organizer.tab.events'), tabBarIcon: ({ color, size }) => <Icon name="calendarMark" size={size} color={String(color)} /> }}
+        options={{ title: t('organizer.tab.events'), tabBarButton: makeTabBarButton('calendarMark', t('organizer.tab.events')) }}
       />
       <Tabs.Screen
         name="account"
-        options={{ title: t('organizer.tab.account'), tabBarIcon: ({ color, size }) => <Icon name="personCircle" size={size} color={String(color)} /> }}
+        options={{ title: t('organizer.tab.account'), tabBarButton: makeTabBarButton('personCircle', t('organizer.tab.account')) }}
       />
     </Tabs>
   )

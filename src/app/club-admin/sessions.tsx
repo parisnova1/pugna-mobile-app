@@ -10,12 +10,11 @@ import EmptyState from '@/components/EmptyState'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import Button from '@/components/Button'
 import DatePickerField from '@/components/DatePickerField'
-import { ACCENT, ON_ACCENT, TEXT, CARD, BORDER, MUTED, INPUT_BG, MODAL_SCRIM, FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_BODY } from '@/theme'
+import { ACCENT, ON_ACCENT, TEXT, CARD, BORDER, MUTED, INPUT_BG, MODAL_SCRIM, FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_BODY, FONT_BODY_MEDIUM } from '@/theme'
+import { DISCIPLINES } from '@/lib/disciplines'
 
 type Session = { id: number; discipline: string; location: string; date: string; time: string; weight_range: string; level: string; spots: number; registered_fighters: number; message: string; accepting_requests: number }
 type Participant = { club_id: number; club_name: string; fighter_count: number; weight_category: string }
-
-const DISCIPLINES = ['Boxing', 'Kickboxing', 'Muay Thai', 'MMA', 'BJJ', 'Wrestling']
 const LEVELS = ['Amateur', 'Intermediate', 'Advanced', 'All Levels']
 
 // `level` stores comma-joined values ("Amateur,Advanced") — a lone value
@@ -266,7 +265,7 @@ const styles = StyleSheet.create({
   pillActive: { backgroundColor: ACCENT, borderColor: ACCENT },
   pillLabel: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 11, letterSpacing: 0.6, color: MUTED, textTransform: 'uppercase' },
   pillLabelActive: { color: ON_ACCENT },
-  errorText: { fontFamily: FONT_BODY, fontSize: 13, fontWeight: '700', color: TEXT, marginBottom: 8 },
+  errorText: { fontFamily: FONT_BODY_MEDIUM, fontSize: 13, color: TEXT, marginBottom: 8 },
   emptyText: { fontFamily: FONT_BODY, fontSize: 13, color: MUTED },
   participantRow: { backgroundColor: INPUT_BG, borderRadius: 4, padding: 12 },
   rowTitle: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 13, color: TEXT, textTransform: 'uppercase' },

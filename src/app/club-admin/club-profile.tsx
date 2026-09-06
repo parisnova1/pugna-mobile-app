@@ -6,14 +6,13 @@ import Screen from '@/components/Screen'
 import Spinner from '@/components/Spinner'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import Button from '@/components/Button'
-import { ACCENT, ON_ACCENT, TEXT, BORDER, MUTED, INPUT_BG, FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_BODY } from '@/theme'
+import { ACCENT, ON_ACCENT, TEXT, BORDER, MUTED, INPUT_BG, FONT_DISPLAY, FONT_DISPLAY_BOLD, FONT_BODY, FONT_BODY_MEDIUM } from '@/theme'
+import { DISCIPLINES } from '@/lib/disciplines'
 
 type Club = {
   id: number; name: string; location: string; disciplines: string[]; founded_year: number | null
   member_count: number; description: string; logo_url: string; cover_url: string
 }
-
-const DISCIPLINES = ['Boxing', 'Kickboxing', 'Muay Thai', 'MMA', 'BJJ', 'Wrestling']
 
 export default function ClubDetailsScreen() {
   return <ErrorBoundary><ClubDetailsInner /></ErrorBoundary>
@@ -132,6 +131,6 @@ const styles = StyleSheet.create({
   pillActive: { backgroundColor: ACCENT, borderColor: ACCENT },
   pillLabel: { fontFamily: FONT_DISPLAY_BOLD, fontSize: 11, letterSpacing: 0.6, color: MUTED, textTransform: 'uppercase' },
   pillLabelActive: { color: ON_ACCENT },
-  errorText: { fontFamily: FONT_BODY, fontSize: 13, fontWeight: '700', color: TEXT, marginBottom: 8 },
+  errorText: { fontFamily: FONT_BODY_MEDIUM, fontSize: 13, color: TEXT, marginBottom: 8 },
   savedText: { fontFamily: FONT_BODY, fontSize: 13, color: MUTED, marginBottom: 8 },
 })

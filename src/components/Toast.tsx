@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState, type ReactNode } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { ToastContext, type ToastKind } from '@/lib/toastContext'
-import { CARD, LIVE_RED, TEXT, FONT_BODY } from '@/theme'
+import { CARD, LIVE_RED, TEXT, FONT_BODY_MEDIUM } from '@/theme'
 
 type ToastItem = { id: number; message: string; kind: ToastKind }
 
@@ -42,8 +42,8 @@ const styles = StyleSheet.create({
   },
   toast: {
     maxWidth: 420, width: '100%', backgroundColor: CARD, borderLeftWidth: 4, borderLeftColor: LIVE_RED,
-    borderRadius: 4, paddingVertical: 12, paddingHorizontal: 16,
+    borderRadius: 12, paddingVertical: 12, paddingHorizontal: 16,
     shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.4, shadowRadius: 16, elevation: 8,
   },
-  text: { fontFamily: FONT_BODY, fontSize: 13, fontWeight: '600', color: TEXT },
+  text: { fontFamily: FONT_BODY_MEDIUM, fontSize: 13, color: TEXT },
 })
